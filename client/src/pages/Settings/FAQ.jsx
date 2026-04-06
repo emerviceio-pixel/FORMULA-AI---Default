@@ -79,12 +79,12 @@ const FAQ = () => {
     general: [
       {
         question: 'What is Fomula?',
-        answer: 'Fomula is an AI-powered meal advisor that helps health-conscious users make safe and informed food choices based on their physical profile, activity level, and health conditions.',
+        answer: 'Fomula is an AI-powered meal coach that helps health-conscious users make safe and informed food choices based on their physical profile, activity level, and health conditions.',
         tags: ['overview', 'purpose']
       },
       {
         question: 'How does the AI analysis work?',
-        answer: 'Our AI uses machine learning algorithms trained on extensive nutritional databases and medical guidelines. When you scan a food item, it analyzes the nutritional content against your profile data to determine safety levels.',
+        answer: 'Our AI uses machine learning algorithms trained on extensive nutritional databases and medical experts. When you scan a food item, it analyzes the nutritional content against your profile data to determine safety levels.',
         tags: ['ai', 'technology']
       },
       {

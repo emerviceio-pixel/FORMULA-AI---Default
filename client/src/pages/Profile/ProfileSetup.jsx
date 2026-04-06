@@ -413,13 +413,12 @@ const ProfileSetup = ({ editMode = false }) => {
   ];
 
   const predefinedConditions = [
-    'Diabetes', 'Hypertension', 'Heart Disease', 'Cholesterol', 'Gluten Intolerance',
-    'Lactose Intolerance', 'Kidney Disease', 'Liver Disease', 'Thyroid Disorder'
+    'Diabetes', 'Hypertension', 'Heart Disease', 'Cholesterol', 'Typhoid Fever',
+    'Cholera', 'Stomach Ulcer', 'Liver Disease', 'Dysentary Disorders', 'Gastrointestinal Issues', 'Kidney Disease', 'Thyroid Disorders'
   ];
 
   const predefinedAllergies = [
-    'Peanuts', 'Tree Nuts', 'Milk', 'Eggs', 'Fish', 'Shellfish', 'Wheat', 'Soy',
-    'Sesame', 'Mustard', 'Celery', 'Lupin', 'Molluscs', 'Sulphites'
+    'Peanuts', 'Tree Nuts', 'Milk', 'Eggs', 'Sugar', 'Shellfish'
   ];
 
   // Check if user already has health key
@@ -511,7 +510,7 @@ const ProfileSetup = ({ editMode = false }) => {
       }
       if (conditionsData.success || allergiesData.success) {
         setIsDecrypted(true);
-        showSuccess('Health data decrypted successfully');
+        showSuccess('Health data decrypted!');
       } else {
         showError('Invalid health key');
       }
@@ -591,6 +590,7 @@ const ProfileSetup = ({ editMode = false }) => {
   };
 
   const validateHeight = (value) => {
+    if (!value) return '';
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue <= 0) return 'Please enter a valid height';
     if (numValue < 50 || numValue > 300) {
@@ -600,6 +600,7 @@ const ProfileSetup = ({ editMode = false }) => {
   };
 
   const validateWeight = (value) => {
+    if (!value) return '';
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue <= 0) return 'Please enter a valid weight';
     if (numValue < 20 || numValue > 300) {

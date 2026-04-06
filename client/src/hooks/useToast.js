@@ -3,20 +3,22 @@ import toast from 'react-hot-toast';
 
 export const useToast = () => {
   const baseStyle = {
-    background: 'rgba(255, 255, 255, 0.9)',
+    background: 'rgba(255, 255, 255, 0.25)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
     color: '#111827',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
+    border: '1px solid rgba(151, 150, 150, 0.3)',
     boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.15), 0 4px 12px -4px rgba(0, 0, 0, 0.1)',
     borderRadius: '12px',
-    padding: '8px 16px',
-    fontSize: '14px',
-    fontWeight: '500',
-    maxWidth: '320px',
+    padding: '6px 12px', 
+    fontSize: '11px',   
+    fontWeight: '700',  
+    maxWidth: '200px',  
     width: 'auto',
     margin: '0.5rem',
-    lineHeight: '1.4',
+    lineHeight: '1.3',   
+    textAlign: 'center', 
+    letterSpacing: '0.3px', 
   };
 
   const showSuccess = (message) => {

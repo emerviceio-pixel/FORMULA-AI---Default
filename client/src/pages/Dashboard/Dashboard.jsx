@@ -339,7 +339,7 @@ const Dashboard = () => {
       const limitData = await limitRes.json();
       
       if (limitData.remaining === 0) {
-        showError(`Too many regenerations. Please wait ${limitData.resetIn} seconds.`);
+        showError(`Please wait ${limitData.resetIn} seconds.`);
         setIsLoading(false);
         return;
       }
@@ -518,8 +518,8 @@ const Dashboard = () => {
     : 0;
   
   const scanBarColor = !displayScanStatus ? 'bg-indigo-500'
-    : displayScanStatus.remaining === 0 || displayScanStatus.remaining === '0' ? 'bg-rose-500'
-    : displayScanStatus.remaining <= 3 ? 'bg-amber-500'
+    : displayScanStatus.remaining === 0 || displayScanStatus.remaining === '0' ? 'bg-indigo-500'
+    : displayScanStatus.remaining <= 3 ? 'bg-indigo-500'
     : 'bg-indigo-500';
   
   const inputDisabled = isLoading || (displayScanStatus && !displayScanStatus.isPremium && displayScanStatus.remaining === 0);
@@ -628,7 +628,6 @@ const Dashboard = () => {
                         </AnimatePresence>
 
                         <div className="flex items-center gap-1">
-                          {/* Enhanced search icon with dramatic transition */}
                           <motion.div 
                             className="pl-4 sm:pl-5 pointer-events-none"
                             animate={inputFocused ? { scale: 1.05, x: -1 } : { scale: 1, x: 0 }}
@@ -800,8 +799,8 @@ const Dashboard = () => {
               <div className="relative w-full">
                 <div className="flex gap-2 overflow-x-auto pb-2 px-4 sm:px-6 md:justify-center md:overflow-x-visible md:flex-wrap" 
                     style={{ 
-                      WebkitOverflowScrolling: 'touch',
-                      scrollbarWidth: 'thin',
+                      WebkitOverflowScrolling: 'none',
+                      scrollbarWidth: 'none',
                       msOverflowStyle: 'auto'
                     }}>
                   {['Breakfast','Lunch','Dinner','Snack','Fruit'].map(item => (

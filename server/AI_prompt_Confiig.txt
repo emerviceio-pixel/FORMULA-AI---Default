@@ -224,14 +224,14 @@ REQUIREMENTS:
 
 Provide analysis in EXACT JSON format:
 {
-  "foodName": "Specific menu item with price (e.g., 'Grilled Chicken Breast - $12.99')",
+  "foodName": "Specific menu item with price (e.g., 'Grilled Chicken Breast - GHC39.99')",
   "status": "SAFE | CAUTIOUS | UNSAFE",
   "reason": "Concise explanation why this specific menu item is suitable or unsuitable",
   "tips": ["Ordering modification tip", "Portion guidance"],
   "maxServing": "Recommended frequency",
   "bestTime": "Optimal time window",
   "alternatives": [],
-  "price": "The total price of the item (e.g., '$12.99')",
+  "price": "Convert the total price to GHC if rated in $ and include the currency (e.g., 'GHC39.99')",
   "isCombinationMeal": true or false
 }
 `;

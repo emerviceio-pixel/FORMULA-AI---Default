@@ -88,7 +88,7 @@ const EmptyState = ({ hasFilters, onClearFilters, onStartScanning }) => (
       )}
     </div>
     <h3 className="text-lg font-medium text-white mb-2">
-      {hasFilters ? 'No matching scans' : 'No scans yet'}
+      {hasFilters ? 'No matching scans' : 'No items yet'}
     </h3>
     <p className="text-sm text-gray-600 max-w-sm mb-4">
       {hasFilters 
@@ -109,7 +109,7 @@ const EmptyState = ({ hasFilters, onClearFilters, onStartScanning }) => (
         onClick={onStartScanning}
         className="px-4 py-2 bg-indigo-500/10 text-indigo-400 rounded-xl text-sm border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
       >
-        Start scanning
+        Start
       </button>
     )}
   </motion.div>
@@ -296,7 +296,7 @@ const ModalContent = ({ result, meta, StatusIcon, userFeedback, isSubmitting, is
           </h2>
         </div>
         <div className="flex items-start gap-2">
-          <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border ${meta.color} ${meta.bg} ${meta.border}`}>
+          <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full ${meta.color} ${meta.bg} ${meta.border}`}>
             <StatusIcon className="w-3.5 h-3.5" />
             {result.status?.toUpperCase()}
           </span>
