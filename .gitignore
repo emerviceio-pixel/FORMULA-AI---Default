@@ -2,6 +2,7 @@
 
 # Node / Server
 node_modules/
+server/.env
 /.env
 /.env.*
 /npm-debug.log*
