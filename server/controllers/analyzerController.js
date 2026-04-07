@@ -3,7 +3,7 @@ require('dotenv').config();
 const User = require('../models/User');
 const Scan = require('../models/Scan');
 const scanLimits = require('../config/scanLimits');
-const ScanLimitService = require('../services/ScanLimitService');
+const scanLimitService = require('../services/scanLimitService');
 const RecommendationService = require('../services/RecommendationService');
 const { decrypt: systemDecrypt } = require('../utils/encryption');
 
