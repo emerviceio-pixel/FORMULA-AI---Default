@@ -70,7 +70,7 @@ class ScanLimitService {
     const scanLimit = scanLimits.getScanLimit(isPremium);
     const resetHours = scanLimits.getResetHours(isPremium);
     
-    // Check if we need to reset first
+    // Check if needed to reset first
     if (limit.nextResetAt && limit.nextResetAt <= new Date()) {
       limit.scansUsed = 0;
       limit.limitReachedAt = null;
