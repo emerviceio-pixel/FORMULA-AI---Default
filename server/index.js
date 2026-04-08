@@ -24,10 +24,6 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow all localhost origins and your specific ngrok domain
     const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:5173',
-      'https://ideationally-intermastoid-cicely.ngrok-free.dev',
       'https://fomula-ai.netlify.app' 
     ];
     
@@ -57,10 +53,10 @@ app.use(session({
     ttl: 24 * 60 * 60
   }),
   cookie: {
-    secure: false, // Set to false for ngrok (HTTP)
+    secure: true, // Set to false for ngrok (HTTP)
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax', // Important for cross-origin
+    sameSite: 'none', // Important for cross-origin
     domain: undefined // Let browser handle domain automatically
   }
 }));
