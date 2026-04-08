@@ -29,12 +29,13 @@ class AuthService {
 
   // Google Auth - NO TOKEN STORAGE
   async googleAuth(token) {
-    const response = await fetch(`${this.getBaseUrl()}/api/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-      credentials: 'include'
-    });
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+    credentials: 'include'
+  });
+
     
     const data = await response.json();
     
