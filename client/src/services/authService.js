@@ -1,139 +1,76 @@
-//client/src/service/authService.js
-
 class AuthService {
-  // Use relative paths (Vite proxy handles it)
+  // Always use the env variable
   getBaseUrl() {
-    return '';
+    return import.meta.env.VITE_API_URL;
   }
 
   async makeRequest(endpoint, method = 'GET', data = null) {
     const config = {
       method,
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include' // Critical for session cookies
+      credentials: 'include'
     };
-    
+
     if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
       config.body = JSON.stringify(data);
     }
-    
+
     const response = await fetch(`${this.getBaseUrl()}${endpoint}`, config);
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `Request failed: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
-  // Google Auth - NO TOKEN STORAGE
+  // Google Auth
   async googleAuth(token) {
-    const response = await fetch(`${this.getBaseUrl()}/api/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-      credentials: 'include'
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Google authentication failed');
-    }
-    
-    // Store minimal user data (NO JWT)
-    if (data.userId) {
-      const user = { id: data.userId };
-      localStorage.setItem('Fomula_auth', JSON.stringify({
-        user,
-        isAuthenticated: !data.isNewUser,
-        timestamp: Date.now()
-      }));
-      
-      if (data.isNewUser) {
-        localStorage.setItem('tempUser', JSON.stringify(data.tempUser));
-      }
-    }
-    
-    return data;
+    return await this.makeRequest('/auth/google', 'POST', { token });
   }
 
-  // Verify PIN - NO TOKEN
   async verifyPin(pin) {
-    const data = await this.makeRequest('/api/auth/verify-pin', 'POST', { pin });
-    if (data.success) {
-      // Update auth state
-      localStorage.setItem('Fomula_auth', JSON.stringify({
-        user: { id: data.userId },
-        isAuthenticated: true,
-        timestamp: Date.now()
-      }));
-    }
-    return data;
+    return await this.makeRequest('/auth/verify-pin', 'POST', { pin });
   }
 
-  // Get PIN attempt status
   async getPinAttemptStatus() {
-    return await this.makeRequest('/api/auth/pin-attempts', 'GET');
+    return await this.makeRequest('/auth/pin-attempts', 'GET');
   }
 
-  // Setup PIN - NO TOKEN
   async setupPin(pin, recoveryWord) {
-    const data = await this.makeRequest('/api/auth/setup-pin', 'POST', { pin, recoveryWord });
-    if (data.success) {
-      localStorage.setItem('Fomula_auth', JSON.stringify({
-        user: { id: data.userId },
-        isAuthenticated: true,
-        timestamp: Date.now()
-      }));
-      localStorage.removeItem('tempUser');
-    }
-    return data;
+    return await this.makeRequest('/auth/setup-pin', 'POST', { pin, recoveryWord });
   }
 
-  // Check session status
   async checkSession() {
-    try {
-      const response = await fetch(`${this.getBaseUrl()}/api/auth/session`, {
-        credentials: 'include'
-      });
-      return await response.json();
-    } catch {
-      return { success: false, isAuthenticated: false };
-    }
+    return await this.makeRequest('/auth/session', 'GET');
   }
 
-  // Get profile
   async getProfile() {
-    return await this.makeRequest('/api/profile');
+    return await this.makeRequest('/profile', 'GET');
   }
 
-  // Update profile
   async updateProfile(profileData) {
-    return await this.makeRequest('/api/profile', 'PUT', profileData);
+    return await this.makeRequest('/profile', 'PUT', profileData);
   }
 
-  // Update settings
   async updateSettings(settings) {
-    return await this.makeRequest('/api/profile/settings', 'PUT', settings);
+    return await this.makeRequest('/profile/settings', 'PUT', settings);
   }
 
-  // Logout
   async logout() {
-    const result = await this.makeRequest('/api/auth/logout', 'POST');
+    const result = await this.makeRequest('/auth/logout', 'POST');
     localStorage.removeItem('Fomula_auth');
     localStorage.removeItem('tempUser');
     return result;
   }
 
   async deleteAccount(reason, feedback) {
-    return await this.makeRequest('/api/settings/account', 'DELETE', { reason, feedback });
+    return await this.makeRequest('/settings/account', 'DELETE', { reason, feedback });
   }
 
-  // Reset PIN
   async resetPin(recoveryWord, newPin) {
-    return await this.makeRequest('/api/auth/reset-pin', 'POST', { recoveryWord, newPin });
+    return await this.makeRequest('/auth/reset-pin', 'POST', { recoveryWord, newPin });
   }
 }
 
