@@ -24,7 +24,9 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow all localhost origins and your specific ngrok domain
     const allowedOrigins = [
-      'https://fomula-ai.netlify.app' 
+      'https://fomula-ai.netlify.app',
+      'https://ideationally-intermastoid-cicely.ngrok-free.dev',
+      'http://localhost:5173'
     ];
     
     // Allow requests with no origin (like mobile apps, curl)

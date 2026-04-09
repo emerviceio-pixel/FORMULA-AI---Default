@@ -24,7 +24,7 @@ const AdminCashPayment = () => {
     setLoading(true);
     try {
       const res = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
-      const data = await res.json();
+      
       if (data.success && data.data.length > 0) {
         setUser(data.data[0]);
         setStep('confirm');
@@ -49,7 +49,7 @@ const AdminCashPayment = () => {
           ...paymentDetails
         })
       });
-      const data = await res.json();
+      
       if (data.success) {
         setStep('complete');
         // Show success message

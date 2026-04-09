@@ -125,7 +125,7 @@ const Dashboard = () => {
         });
         
         if (res.ok) {
-          const data = await res.json();
+          
           if (data.success) {
             setLocalScanStatus(data.scanStatus);
             setResetTimestamp(data.scanStatus.resetTimestamp);
@@ -175,7 +175,7 @@ const Dashboard = () => {
       });
       
       if (res.ok) {
-        const data = await res.json();
+        
         if (data.success) {
           setLocalScanStatus(data.scanStatus);
           setResetTimestamp(data.scanStatus.resetTimestamp);
@@ -212,7 +212,7 @@ const Dashboard = () => {
         throw new Error('Server returned non-JSON response');
       }
 
-      const data = await res.json();
+      
 
       if (!data.success) {
         switch (data.type) {
@@ -356,7 +356,7 @@ const Dashboard = () => {
         body: JSON.stringify({ scanId: result.id }),
       });
 
-      const data = await res.json();
+      
       
       if (data.success) {
         setResult({ ...data.scan, inputType: data.scan.inputType });
@@ -402,7 +402,7 @@ const Dashboard = () => {
         body: JSON.stringify({ scanId: result.id, feedbackType }),
       });
       
-      const data = await res.json();
+      
       
       if (res.ok && data.success) {
         setUserFeedback(feedbackType);

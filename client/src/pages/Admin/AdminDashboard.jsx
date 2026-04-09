@@ -212,7 +212,7 @@ const AdminDashboard = () => {
     setIsLoading(true);
     try {
       const res  = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
-      const data = await res.json();
+      
       if (data.success) { setSearchResults(data.data); if (!data.data.length) showSuccess('No users found'); }
     } catch { showError('Search failed'); }
     finally { setIsLoading(false); }
@@ -222,7 +222,7 @@ const AdminDashboard = () => {
     setRevenueLoading(true);
     try {
       const res = await apiFetch(`/admin/revenue/monthly?year=${selectedYear}&month=${selectedMonth}`);
-      const data = await res.json();
+      
       if (data.success) {
         setRevenueData(data.data);
         setRevenuePage(1); // Reset to first page on new data

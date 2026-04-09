@@ -504,10 +504,7 @@ const History = () => {
           'Pragma': 'no-cache'
         }
       });
-
-      if (!res.ok) throw new Error(`Failed to fetch scans: ${res.status}`);
-
-      const data = await res.json();
+      
       
       if (data.success) {
         const newScans = data.scans || [];
@@ -774,7 +771,7 @@ const History = () => {
         body: JSON.stringify({ scanId: selectedScan.id, feedbackType }),
       });
       
-      const data = await res.json();
+      
       
       if (res.ok && data.success) {
         setUserFeedback(feedbackType);
