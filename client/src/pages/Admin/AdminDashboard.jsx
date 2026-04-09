@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
+import { apiFetch } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -147,7 +148,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (profile?.admin && isAdminAuthorized) {
-      fetch('/api/admin/dashboard')
+      apiFetch('/admin/dashboard')
         .then(r => r.json())
         .then(d => { if (d.success) setDashboardData(d.data); })
         .catch(() => showError('Failed to load dashboard data'));
@@ -157,7 +158,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (profile?.admin && activeTab === 'feedback' && isAdminAuthorized) {
       setFeedbackLoading(true);
-      fetch('/api/admin/feedback/analytics')
+      apiFetch('/admin/feedback/analytics')
         .then(r => r.json())
         .then(d => { if (d.success) setFeedbackAnalytics(d.data); })
         .catch(() => showError('Failed to load feedback analytics'))
@@ -168,7 +169,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!profile?.admin || activeTab !== 'activity') return;
     const load = () =>
-      fetch(`/api/admin/active-users?range=${activeTimeRange}`)
+      apiFetch(`/admin/active-users?range=${activeTimeRange}`)
         .then(r => r.json())
         .then(d => { if (d.success) setActiveUsers(d.data.users); });
     load();
@@ -183,7 +184,7 @@ const AdminDashboard = () => {
     if (feedbackFilter.type)      params.append('type',      feedbackFilter.type);
     if (feedbackFilter.country)   params.append('country',   feedbackFilter.country);
     if (feedbackFilter.inputType) params.append('inputType', feedbackFilter.inputType);
-    fetch(`/api/admin/feedback/list?${params}`)
+    apiFetch(`/admin/feedback/list?${params}`)
       .then(r => r.json())
       .then(d => {
         if (d.success) {
@@ -210,7 +211,7 @@ const AdminDashboard = () => {
     if (!searchEmail.trim()) return;
     setIsLoading(true);
     try {
-      const res  = await fetch(`/api/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
+      const res  = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
       const data = await res.json();
       if (data.success) { setSearchResults(data.data); if (!data.data.length) showSuccess('No users found'); }
     } catch { showError('Search failed'); }
@@ -220,7 +221,7 @@ const AdminDashboard = () => {
   const fetchMonthlyRevenue = async () => {
     setRevenueLoading(true);
     try {
-      const res = await fetch(`/api/admin/revenue/monthly?year=${selectedYear}&month=${selectedMonth}`);
+      const res = await apiFetch(`/admin/revenue/monthly?year=${selectedYear}&month=${selectedMonth}`);
       const data = await res.json();
       if (data.success) {
         setRevenueData(data.data);
@@ -258,7 +259,7 @@ const AdminDashboard = () => {
         format: exportFormat
       });
 
-      const response = await fetch(`/api/admin/feedback/export?${params}`, {
+      const response = await apiFetch(`/admin/feedback/export?${params}`, {
         method: 'GET',
         credentials: 'include'
       });

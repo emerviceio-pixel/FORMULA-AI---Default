@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { useToast } from '../../hooks/useToast';
+import { apiFetch } from '../../services/api';
 import {
   Clock,
   Search,
@@ -458,7 +459,7 @@ const History = () => {
   const fetchExistingFeedback = async (scanId) => {
     try {
       setIsLoadingFeedback(true);
-      const response = await fetch(`/api/feedback/status/${scanId}`, {
+      const response = await apiFetch(`/feedback/status/${scanId}`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -496,7 +497,7 @@ const History = () => {
       if (selectedStatus) params.append('status', selectedStatus);
       params.append('sort', sortOrder);
 
-      const res = await fetch(`/api/scans/history?${params.toString()}`, {
+      const res = await apiFetch(`/scans/history?${params.toString()}`, {
         credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache',
@@ -595,7 +596,7 @@ const History = () => {
   /* ─── Delete Functions ───────────────────────────────────────── */
   const deleteScan = useCallback(async (scanId, showUndo = true) => {
     try {
-      const response = await fetch(`/api/scans/${scanId}`, {
+      const response = await apiFetch(`/scans/${scanId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -671,7 +672,7 @@ const History = () => {
     setIsDeletingBatch(true);
     
     try {
-      const response = await fetch('/api/scans/bulk', {
+      const response = await apiFetch('/scans/bulk', {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -766,7 +767,7 @@ const History = () => {
     setIsSubmitting(true);
     
     try {
-      const res = await fetch('/api/feedback/submit', {
+      const res = await apiFetch('/feedback/submit', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

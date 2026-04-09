@@ -5,6 +5,7 @@ import {
   Wallet, Search, User, Calendar, CheckCircle, 
   XCircle, Clock, DollarSign, FileText 
 } from 'lucide-react';
+import { apiFetch } from '../../services/api';
 
 const AdminCashPayment = () => {
   const [step, setStep] = useState('search'); // search, confirm, complete
@@ -22,7 +23,7 @@ const AdminCashPayment = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
+      const res = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
       const data = await res.json();
       if (data.success && data.data.length > 0) {
         setUser(data.data[0]);
@@ -40,7 +41,7 @@ const AdminCashPayment = () => {
   const processCashPayment = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/cash-payment', {
+      const res = await apiFetch('/admin/cash-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

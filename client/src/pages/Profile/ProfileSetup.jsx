@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
+import { apiFetch } from '../../services/api';
 import ReactCountryFlag from "react-country-flag";
 import Select from "react-select";
 import { getData } from 'country-list';
@@ -484,10 +485,10 @@ const ProfileSetup = ({ editMode = false }) => {
     setIsDecrypting(true);
     try {
       const [conditionsRes, allergiesRes] = await Promise.all([
-        fetch(`/api/profile/health-conditions?key=${encodeURIComponent(healthKey)}`, {
+        apiFetch(`/profile/health-conditions?key=${encodeURIComponent(healthKey)}`, {
           credentials: 'include'
         }),
-        fetch(`/api/profile/allergies?key=${encodeURIComponent(healthKey)}`, {
+        apiFetch(`/profile/allergies?key=${encodeURIComponent(healthKey)}`, {
           credentials: 'include'
         })
       ]);

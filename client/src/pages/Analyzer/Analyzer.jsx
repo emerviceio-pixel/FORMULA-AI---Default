@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiFetch } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { 
   Search, 
@@ -31,7 +32,7 @@ const Analyzer = () => {
     
     setIsLoading(true);
     try {
-      const res = await fetch('/api/analyzer/analyze', {
+      const res = await apiFetch('/analyzer/analyze', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

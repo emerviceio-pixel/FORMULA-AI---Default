@@ -1,6 +1,7 @@
 // client/src/pages/Dashboard/Dashboard.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
+import { apiFetch } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import { useCountdown } from '../../hooks/useCountdown';
@@ -90,7 +91,7 @@ const Dashboard = () => {
   const fetchExistingFeedback = async (scanId) => {
     try {
       setIsLoadingFeedback(true);
-      const response = await fetch(`/api/feedback/status/${scanId}`, {
+      const response = await apiFetch(`/feedback/status/${scanId}`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -115,7 +116,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchInitialScanStatus = async () => {
       try {
-        const res = await fetch('/api/scans/status/me', { 
+        const res = await apiFetch('/scans/status/me', { 
           credentials: 'include',
           headers: {
             'Cache-Control': 'no-cache',
@@ -165,7 +166,7 @@ const Dashboard = () => {
 
   const refreshScanStatus = async () => {
     try {
-      const res = await fetch('/api/scans/status/me', { 
+      const res = await apiFetch('/scans/status/me', { 
         credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache',
@@ -195,7 +196,7 @@ const Dashboard = () => {
     setIsLoading(true);
     
     try {
-      const res = await fetch('/api/analyzer/validate-and-analyze', {
+      const res = await apiFetch('/analyzer/validate-and-analyze', {
         method: 'POST',
         credentials: 'include',
         headers: { 
@@ -333,7 +334,7 @@ const Dashboard = () => {
     const startTime = Date.now();
     
     try {
-      const limitRes = await fetch('/api/regenerate/limit', {
+      const limitRes = await apiFetch('/regenerate/limit', {
         credentials: 'include'
       });
       const limitData = await limitRes.json();
@@ -348,7 +349,7 @@ const Dashboard = () => {
     }
     
     try {
-      const res = await fetch('/api/regenerate/recommendation', {
+      const res = await apiFetch('/regenerate/recommendation', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -394,7 +395,7 @@ const Dashboard = () => {
     setIsSubmitting(true);
     
     try {
-      const res = await fetch('/api/feedback/submit', {
+      const res = await apiFetch('/feedback/submit', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

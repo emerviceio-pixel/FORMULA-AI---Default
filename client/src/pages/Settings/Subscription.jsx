@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
+import { apiFetch } from '../../services/api';
 import {
   Crown,
   Check,
@@ -93,7 +94,7 @@ const Subscription = () => {
         })
       };
 
-      const response = await fetch('/api/subscription/initialize', {
+      const response = await apiFetch('/subscription/initialize', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -141,7 +142,7 @@ const Subscription = () => {
     }
     
     try {
-      const response = await fetch('/api/subscription/cancel', {
+      const response = await apiFetch('/subscription/cancel', {
         method: 'POST',
         credentials: 'include'
       });
