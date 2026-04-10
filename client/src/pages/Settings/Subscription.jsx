@@ -94,16 +94,12 @@ const Subscription = () => {
         })
       };
 
-      const response = await apiFetch('/subscription/initialize', {
+      const data = await apiFetch('/subscription/initialize', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
       });
-
-      const result = await response.json();
       
-      if (result.success) {
+      if (data.success) {
         window.location.href = result.authorizationUrl;
       } else {
         showError(result.error);
@@ -142,12 +138,11 @@ const Subscription = () => {
     }
     
     try {
-      const response = await apiFetch('/subscription/cancel', {
-        method: 'POST',
-        credentials: 'include'
+      const data = await apiFetch('/subscription/cancel', {
+        method: 'POST'
       });
       
-      if (response.ok) {
+      if (data.success) {
         showSuccess('Cancellation sucessful.');
         window.location.reload();
       }

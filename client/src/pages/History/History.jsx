@@ -459,11 +459,7 @@ const History = () => {
   const fetchExistingFeedback = async (scanId) => {
     try {
       setIsLoadingFeedback(true);
-      const response = await apiFetch(`/feedback/status/${scanId}`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      
+      const data = await apiFetch(`/feedback/status/${scanId}`);      
       if (data.success && data.hasFeedback) {
         setUserFeedback(data.feedbackType);
       }
@@ -497,13 +493,7 @@ const History = () => {
       if (selectedStatus) params.append('status', selectedStatus);
       params.append('sort', sortOrder);
 
-      const res = await apiFetch(`/scans/history?${params.toString()}`, {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const data= await apiFetch(`/scans/history?${params.toString()}`);
       
       
       if (data.success) {
@@ -593,12 +583,8 @@ const History = () => {
   /* ─── Delete Functions ───────────────────────────────────────── */
   const deleteScan = useCallback(async (scanId, showUndo = true) => {
     try {
-      const response = await apiFetch(`/scans/${scanId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
+      const data = await apiFetch(`/scans/${scanId}`, {
+        method: 'DELETE'      });
       
       if (data.success) {
         // Store the deleted item for undo
@@ -669,14 +655,10 @@ const History = () => {
     setIsDeletingBatch(true);
     
     try {
-      const response = await apiFetch('/scans/bulk', {
+      const data = await apiFetch('/scans/bulk', {
         method: 'DELETE',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startDate, endDate })
       });
-      
-      const data = await response.json();
       
       if (data.success) {
         showSuccess(`Deleted ${data.deletedCount} items`);
@@ -764,16 +746,14 @@ const History = () => {
     setIsSubmitting(true);
     
     try {
-      const res = await apiFetch('/feedback/submit', {
+      const data= await apiFetch('/feedback/submit', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scanId: selectedScan.id, feedbackType }),
       });
       
       
       
-      if (res.ok && data.success) {
+      if ( data.success) {
         setUserFeedback(feedbackType);
         showSuccess(feedbackType === 'good' ? 'Thanks for your feedback!' : 'Feedback recorded');
       } else {

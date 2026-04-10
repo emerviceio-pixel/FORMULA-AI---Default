@@ -23,7 +23,7 @@ const AdminCashPayment = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
+      const data = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
       
       if (data.success && data.data.length > 0) {
         setUser(data.data[0]);
@@ -41,9 +41,8 @@ const AdminCashPayment = () => {
   const processCashPayment = async () => {
     setLoading(true);
     try {
-      const res = await apiFetch('/admin/cash-payment', {
+      const data = await apiFetch('/admin/cash-payment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user._id,
           ...paymentDetails

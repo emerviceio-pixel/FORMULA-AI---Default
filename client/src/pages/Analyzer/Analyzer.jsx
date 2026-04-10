@@ -34,11 +34,9 @@ const Analyzer = () => {
     try {
       const res = await apiFetch('/analyzer/analyze', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ foodName })
       });
-      const data = await res.json();
+      
       
       if (data.success) {
         setResult(data.scan);

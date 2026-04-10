@@ -485,15 +485,11 @@ const ProfileSetup = ({ editMode = false }) => {
     setIsDecrypting(true);
     try {
       const [conditionsRes, allergiesRes] = await Promise.all([
-        apiFetch(`/profile/health-conditions?key=${encodeURIComponent(healthKey)}`, {
-          credentials: 'include'
-        }),
-        apiFetch(`/profile/allergies?key=${encodeURIComponent(healthKey)}`, {
-          credentials: 'include'
-        })
+        apiFetch(`/profile/health-conditions?key=${encodeURIComponent(healthKey)}`),
+        apiFetch(`/profile/allergies?key=${encodeURIComponent(healthKey)}`)
       ]);
-      const conditionsData = await conditionsRes.json();
-      const allergiesData = await allergiesRes.json();
+      const conditionsData = conditionsRes;
+      const allergiesData = allergiesRes;
       
       if (conditionsData.success) {
         setDecryptedConditions(Array.isArray(conditionsData.conditions) ? conditionsData.conditions : []);

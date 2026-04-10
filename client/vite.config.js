@@ -17,7 +17,7 @@ export default defineConfig({
     hmr: {
       overlay: true,
     },
-     allowedHosts: ['ideationally-intermastoid-cicely.ngrok-free.dev']
+     allowedHosts: ['ideationally-intermastoid-cicely.ngrok-free.dev', 'localhost:5173']
   },
   resolve: {
     alias: {

@@ -146,63 +146,68 @@ const AdminDashboard = () => {
     checkAdminAuth();
   }, [profile, authLoading]);
 
+  // Dashboard data
   useEffect(() => {
     if (profile?.admin && isAdminAuthorized) {
       apiFetch('/admin/dashboard')
-        .then(r => r.json())
-        .then(d => { if (d.success) setDashboardData(d.data); })
+        .then(data => { 
+          if (data.success) setDashboardData(data.data); 
+        })
         .catch(() => showError('Failed to load dashboard data'));
     }
   }, [profile, isAdminAuthorized]);
 
+  // Feedback analytics
   useEffect(() => {
     if (profile?.admin && activeTab === 'feedback' && isAdminAuthorized) {
       setFeedbackLoading(true);
       apiFetch('/admin/feedback/analytics')
-        .then(r => r.json())
-        .then(d => { if (d.success) setFeedbackAnalytics(d.data); })
+        .then(data => { 
+          if (data.success) setFeedbackAnalytics(data.data); 
+        })
         .catch(() => showError('Failed to load feedback analytics'))
         .finally(() => setFeedbackLoading(false));
     }
   }, [profile, activeTab, isAdminAuthorized]);
 
+  // Active users
   useEffect(() => {
     if (!profile?.admin || activeTab !== 'activity') return;
     const load = () =>
       apiFetch(`/admin/active-users?range=${activeTimeRange}`)
-        .then(r => r.json())
-        .then(d => { if (d.success) setActiveUsers(d.data.users); });
+        .then(data => { 
+          if (data.success) setActiveUsers(data.data.users); 
+        });
     load();
     const iv = activeTimeRange === '10m' ? setInterval(load, 30000) : null;
     return () => iv && clearInterval(iv);
   }, [profile, activeTab, activeTimeRange, isAdminAuthorized]);
 
+  // Feedback list
   useEffect(() => {
     if (!profile?.admin || activeTab !== 'feedback' || !isAdminAuthorized) return;
     setFeedbackLoading(true);
     const params = new URLSearchParams({ page: feedbackPage, limit: 10 });
-    if (feedbackFilter.type)      params.append('type',      feedbackFilter.type);
-    if (feedbackFilter.country)   params.append('country',   feedbackFilter.country);
+    if (feedbackFilter.type) params.append('type', feedbackFilter.type);
+    if (feedbackFilter.country) params.append('country', feedbackFilter.country);
     if (feedbackFilter.inputType) params.append('inputType', feedbackFilter.inputType);
+    
     apiFetch(`/admin/feedback/list?${params}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setFeedbackList(d.data.feedback);
-          setFeedbackTotalPages(d.data.pagination.totalPages);
-          if (d.data.filters) setAvailableFilters({ countries: d.data.filters.countries || [], inputTypes: d.data.filters.inputTypes || [] });
+      .then(data => {
+        if (data.success) {
+          setFeedbackList(data.data.feedback);
+          setFeedbackTotalPages(data.data.pagination.totalPages);
+          if (data.data.filters) {
+            setAvailableFilters({ 
+              countries: data.data.filters.countries || [], 
+              inputTypes: data.data.filters.inputTypes || [] 
+            });
+          }
         }
       })
       .catch(() => showError('Failed to load feedback list'))
       .finally(() => setFeedbackLoading(false));
   }, [profile, activeTab, feedbackPage, feedbackFilter, isAdminAuthorized]);
-
-  // Fetch revenue data when revenue tab is active
-  useEffect(() => {
-    if (profile?.admin && activeTab === 'revenue' && isAdminAuthorized) {
-      fetchMonthlyRevenue();
-    }
-  }, [profile, activeTab, selectedYear, selectedMonth, isAdminAuthorized]);
 
 
 
@@ -211,7 +216,7 @@ const AdminDashboard = () => {
     if (!searchEmail.trim()) return;
     setIsLoading(true);
     try {
-      const res  = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
+      const data  = await apiFetch(`/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
       
       if (data.success) { setSearchResults(data.data); if (!data.data.length) showSuccess('No users found'); }
     } catch { showError('Search failed'); }
@@ -221,7 +226,7 @@ const AdminDashboard = () => {
   const fetchMonthlyRevenue = async () => {
     setRevenueLoading(true);
     try {
-      const res = await apiFetch(`/admin/revenue/monthly?year=${selectedYear}&month=${selectedMonth}`);
+      const data = await apiFetch(`/admin/revenue/monthly?year=${selectedYear}&month=${selectedMonth}`);
       
       if (data.success) {
         setRevenueData(data.data);
@@ -259,14 +264,12 @@ const AdminDashboard = () => {
         format: exportFormat
       });
 
-      const response = await apiFetch(`/admin/feedback/export?${params}`, {
-        method: 'GET',
-        credentials: 'include'
+      const data = await apiFetch(`/admin/feedback/export?${params}`, {
+        method: 'GET'
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Export failed');
+      if (!data.success) {
+        throw new Error(data.error || 'Export failed');
       }
 
       // Handle different formats

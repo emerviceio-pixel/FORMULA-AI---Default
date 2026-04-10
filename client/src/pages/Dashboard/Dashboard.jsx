@@ -91,10 +91,7 @@ const Dashboard = () => {
   const fetchExistingFeedback = async (scanId) => {
     try {
       setIsLoadingFeedback(true);
-      const response = await apiFetch(`/feedback/status/${scanId}`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const dataponse = await apiFetch(`/feedback/status/${scanId}`);
       
       if (data.success && data.hasFeedback) {
         setUserFeedback(data.feedbackType);
@@ -116,21 +113,15 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchInitialScanStatus = async () => {
       try {
-        const res = await apiFetch('/scans/status/me', { 
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (res.ok) {
+        const data = await apiFetch('/scans/status/me');
+
           
+
           if (data.success) {
             setLocalScanStatus(data.scanStatus);
             setResetTimestamp(data.scanStatus.resetTimestamp);
           }
-        }
+        
       } catch (error) {
         console.error('Failed to fetch initial scan status:', error);
       }
@@ -166,22 +157,14 @@ const Dashboard = () => {
 
   const refreshScanStatus = async () => {
     try {
-      const res = await apiFetch('/scans/status/me', { 
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (res.ok) {
+      const data = await apiFetch('/scans/status/me');      
         
         if (data.success) {
           setLocalScanStatus(data.scanStatus);
           setResetTimestamp(data.scanStatus.resetTimestamp);
           return data.scanStatus;
         }
-      }
+
     } catch (error) {
       console.error('Failed to refresh scan status:', error);
     }
@@ -196,23 +179,10 @@ const Dashboard = () => {
     setIsLoading(true);
     
     try {
-      const res = await apiFetch('/analyzer/validate-and-analyze', {
+      const data = await apiFetch('/analyzer/validate-and-analyze', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
         body: JSON.stringify({ foodName: query }),
       });
-
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server returned non-JSON response');
-      }
-
-      
 
       if (!data.success) {
         switch (data.type) {
@@ -334,10 +304,8 @@ const Dashboard = () => {
     const startTime = Date.now();
     
     try {
-      const limitRes = await apiFetch('/regenerate/limit', {
-        credentials: 'include'
-      });
-      const limitData = await limitRes.json();
+      const limitRes = await apiFetch('/regenerate/limit');
+      const limitData = limitRes;
       
       if (limitData.remaining === 0) {
         showError(`Please wait ${limitData.resetIn} seconds.`);
@@ -349,14 +317,13 @@ const Dashboard = () => {
     }
     
     try {
-      const res = await apiFetch('/regenerate/recommendation', {
+      const data = await apiFetch('/regenerate/recommendation', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scanId: result.id }),
       });
 
       
+
       
       if (data.success) {
         setResult({ ...data.scan, inputType: data.scan.inputType });
@@ -395,16 +362,15 @@ const Dashboard = () => {
     setIsSubmitting(true);
     
     try {
-      const res = await apiFetch('/feedback/submit', {
+      const data = await apiFetch('/feedback/submit', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scanId: result.id, feedbackType }),
       });
       
       
+
       
-      if (res.ok && data.success) {
+      if ( data.success) {
         setUserFeedback(feedbackType);
         showSuccess(feedbackType === 'good' ? 'Thanks for your feedback!' : 'Feedback recorded');
       } else {
@@ -525,7 +491,7 @@ const Dashboard = () => {
   
   const inputDisabled = isLoading || (displayScanStatus && !displayScanStatus.isPremium && displayScanStatus.remaining === 0);
 
-  const resetDisplay = countdownTime || displayScanStatus?.resetIn;
+  const dataetDisplay = countdownTime || displayScanStatus?.resetIn;
 
   if (authLoading) return (
     <div className="min-h-screen bg-[#080808] flex items-center justify-center">

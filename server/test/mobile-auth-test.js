@@ -17,7 +17,7 @@ async function testMobileLogin() {
       body: JSON.stringify(loginData)
     });
 
-    const result = await response.json();
+    const result = response;
     
     if (result.success) {
       console.log('✅ Mobile login successful!');
