@@ -10,6 +10,7 @@ router.post('/verify-pin', authController.verifyPin);
 router.get('/pin-attempts', authController.getPinAttempts);
 router.post('/reset-pin', authController.resetPin);
 router.post('/logout', authController.logout);
+router.get('/auth/me', authController.getCurrentUser.bind(authController));
 
 // session check
 router.get('/session', (req, res) => {

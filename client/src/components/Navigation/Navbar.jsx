@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import {
-  Home,
   User,
   Settings,
   LogOut,
@@ -15,13 +14,14 @@ import {
   ChevronRight,
   Zap,
   ScanIcon,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, logout } = useAuth();
+  const { profile, logout, isAdmin } = useAuth();
   const { showSuccess } = useToast();
   
   const [isScrolled, setIsScrolled] = useState(false);
@@ -147,6 +147,30 @@ const Navbar = () => {
                     )}
                   </NavLink>
                 ))}
+
+                  {/* ⭐ ADMIN LINK - Only show if user is admin */}
+                  {isAdmin && (
+                    <NavLink
+                      to="/admin"
+                      className={({ isActive }) =>
+                        `relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-1.5 ${
+                          isActive
+                            ? 'text-indigo-400 bg-indigo-500/10'
+                            : 'text-gray-400 hover:text-gray-200'
+                        }`
+                      }
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Admin</span>
+                      {({ isActive }) => isActive && (
+                        <motion.div
+                          layoutId="desktop-nav-indicator"
+                          className="absolute inset-0 bg-indigo-500/10 rounded-lg"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                    </NavLink>
+                  )}
               </div>
             </div>
 
@@ -305,6 +329,29 @@ const Navbar = () => {
                         <ChevronRight className="w-4 h-4 opacity-50" />
                       </NavLink>
                     ))}
+
+                    {/* ⭐ ADMIN LINK - Mobile */}
+                    {isAdmin && (
+                      <NavLink
+                        to="/admin"
+                        onClick={toggleMobileMenu}
+                        className={({ isActive }) =>
+                          `flex items-center justify-between p-3 rounded-xl transition-all duration-150 ${
+                            isActive
+                              ? 'bg-indigo-500/10 text-indigo-400'
+                              : 'text-gray-400 hover:bg-gray-800/80 hover:text-gray-200'
+                          }`
+                        }
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-800/80 rounded-lg flex items-center justify-center">
+                            <Shield className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm font-medium">Admin Panel</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 opacity-50" />
+                      </NavLink>
+                    )}
 
                     {/* Support Link */}
                     <button

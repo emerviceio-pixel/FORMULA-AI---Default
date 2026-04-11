@@ -41,7 +41,8 @@ class AuthController {
           success: true,
           isNewUser: false,
           hasPin: true,
-          userId: user._id
+          userId: user._id,
+           isAdmin: user.admin === true
         });
       } else {
         // New user - store in session for profile setup
@@ -67,6 +68,43 @@ class AuthController {
       res.status(401).json({
         success: false,
         error: 'Authentication failed'
+      });
+    }
+  }
+
+  async getCurrentUser(req, res) {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+      
+      const user = await User.findById(req.session.userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+      
+      return res.json({
+        success: true,
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          nickname: user.nickname,
+          isAdmin: user.admin === true,  // ← CRITICAL: Include this
+          subscription: user.subscription
+        }
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Server error'
       });
     }
   }

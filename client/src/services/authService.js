@@ -58,6 +58,10 @@ class AuthService {
     return await this.makeRequest('/profile/settings', 'PUT', settings);
   }
 
+  async getCurrentUser() {
+    return await this.makeRequest('/auth/me', 'GET');
+  }
+
   async logout() {
     const result = await this.makeRequest('/auth/logout', 'POST');
     localStorage.removeItem('Fomula_auth');

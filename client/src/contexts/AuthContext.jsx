@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser]                     = useState(cached?.user          ?? null);
   const [profile, setProfile]               = useState(cached?.profile        ?? null);
   const [isAuthenticated, setIsAuthenticated] = useState(cached?.isAuthenticated ?? false);
+  const [isAdmin, setIsAdmin] = useState(cached?.isAdmin ?? false);
 
   // If we have a valid cache we can skip the loading spinner entirely.
   // If there's no cache we must wait for initializeAuth() before routing.
@@ -56,35 +57,43 @@ export const AuthProvider = ({ children }) => {
         if (session.success && session.userId) {
           setUser({ id: session.userId });
           setIsAuthenticated(!!session.isAuthenticated);
+          
+          // Set admin status from session if available
+          if (session.isAdmin !== undefined) {
+            setIsAdmin(session.isAdmin);
+          }
 
           if (session.isAuthenticated) {
             try {
               const userProfile = await authService.getProfile();
               if (userProfile.success) {
                 setProfile(userProfile.profile);
+                // Also check admin from profile
+                if (userProfile.profile?.isAdmin !== undefined) {
+                  setIsAdmin(userProfile.profile.isAdmin);
+                }
               }
             } catch {
               // Profile may not exist yet — that's fine
             }
           }
         } else {
-          // Server says no valid session — clear everything
           setUser(null);
           setProfile(null);
           setIsAuthenticated(false);
+          setIsAdmin(false); // ← RESET ADMIN
           localStorage.removeItem(STORAGE_KEY);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        // On network error keep the cached state so the user isn't
-        // logged out due to a momentary connectivity issue.
         if (!cached) {
           setUser(null);
           setProfile(null);
           setIsAuthenticated(false);
+          setIsAdmin(false); // ← RESET ADMIN
         }
       } finally {
-        setIsLoading(false); // always unblock routing after server check
+        setIsLoading(false);
       }
     };
 
@@ -98,12 +107,13 @@ export const AuthProvider = ({ children }) => {
         user,
         profile,
         isAuthenticated,
+        isAdmin,
         timestamp: Date.now(),
       }));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
-  }, [user, profile, isAuthenticated]);
+  }, [user, profile, isAuthenticated, isAdmin]);
 
   // ── Auth actions ───────────────────────────────────────────────────────────
   const googleLogin = async (token) => {
@@ -111,6 +121,7 @@ export const AuthProvider = ({ children }) => {
     if (result.success) {
       setUser({ id: result.userId });
       setIsAuthenticated(!result.isNewUser);
+      setIsAdmin(result.isAdmin === true);
     }
     return result;
   };
@@ -121,19 +132,29 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.verifyPin(pin);
       if (result.success) {
         setIsAuthenticated(true);
+        // Also check if admin status comes from PIN verification
+        if (result.isAdmin !== undefined) {
+          setIsAdmin(result.isAdmin);
+        }
         try {
           const userProfile = await authService.getProfile();
-          if (userProfile.success) setProfile(userProfile.profile);
+          if (userProfile.success) {
+            setProfile(userProfile.profile);
+            if (userProfile.profile?.isAdmin !== undefined) {
+              setIsAdmin(userProfile.profile.isAdmin);
+            }
+          }
         } catch { /* silent */ }
       }
       return result;
     } catch (error) {
-      showError(error.message || 'Invalidd PIN');
+      showError(error.message || 'Invalid PIN');
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
+
   const getPinAttemptStatus = async () => {
     try {
       return await authService.getPinAttemptStatus();
@@ -218,6 +239,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setProfile(null);
         setIsAuthenticated(false);
+        setIsAdmin(false)
       }
     } catch (error) {
       showError(error.message || 'Failed to logout');
@@ -231,6 +253,7 @@ export const AuthProvider = ({ children }) => {
     profile,
     isLoading,
     isAuthenticated,
+     isAdmin,
     googleLogin,
     setupPin,
     verifyPin,
