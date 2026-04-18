@@ -58,7 +58,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in getRecentScans:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch recent scans' 
@@ -117,7 +116,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in getScanById:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch scan' 
@@ -200,7 +198,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in getScanHistory:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch scan history' 
@@ -266,7 +263,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in getScansByDateRange:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch scans by date range' 
@@ -364,7 +360,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in getScanStats:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch scan statistics' 
@@ -416,7 +411,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in deleteScan:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to delete scan' 
@@ -456,7 +450,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in resetScanLimit:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to reset scan limit' 
@@ -501,7 +494,6 @@ const scanController = {
       });
 
     } catch (error) {
-      console.error('Error in getScanLimitConfig:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch scan limit configuration' 

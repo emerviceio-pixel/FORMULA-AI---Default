@@ -377,7 +377,6 @@ const exportFeedback = async (req, res) => {
     res.status(400).json({ success: false, error: 'Invalid format specified' });
     
   } catch (error) {
-    console.error('Export error:', error);
     res.status(500).json({ success: false, error: 'Failed to export feedback data' });
   }
 };

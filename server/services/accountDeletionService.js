@@ -45,7 +45,6 @@ class AccountDeletionService {
       await session.commitTransaction();
 
       // Log deletion for audit (optional)
-      console.log(`Account deleted: ${userId} at ${new Date().toISOString()}`);
 
       return {
         success: true,

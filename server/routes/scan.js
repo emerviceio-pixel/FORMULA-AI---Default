@@ -123,7 +123,6 @@ router.get('/history', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error fetching scan history:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch scan history'
@@ -186,7 +185,6 @@ router.delete('/bulk', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Bulk delete error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to delete scans'

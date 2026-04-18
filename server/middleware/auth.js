@@ -23,7 +23,6 @@ const requireAuth = async (req, res, next) => {
       lastActiveAt: new Date()
     });
   } catch (error) {
-    console.warn('Failed to update lastActiveAt:', error.message);
   }
   
   // ✅ NEW: Check if premium subscription has expired
@@ -42,7 +41,6 @@ const requireAuth = async (req, res, next) => {
       }
     }
   } catch (error) {
-    console.error('Subscription expiry check error:', error);
     // Don't block auth if expiry check fails
   }
   

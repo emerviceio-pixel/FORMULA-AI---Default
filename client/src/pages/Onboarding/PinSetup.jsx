@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
-import { Lock, Eye, EyeOff, Shield, ChevronLeft, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import {Eye, EyeOff, ChevronLeft, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const PinSetup = () => {
   const navigate = useNavigate();
@@ -436,29 +436,29 @@ const PinSetup = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
             >
-              <div className={`bg-gray-900 rounded-xl border shadow-2xl p-6 pointer-events-auto max-w-sm w-full mx-4 ${
+              <div className={`bg-gray-900 rounded-xl border shadow-xl p-3 pointer-events-auto w-auto min-w-[180px] mx-4 transition-all ${
                 statusDisplay === 'success' ? 'border-green-500/50' : 'border-red-500/50'
               }`}>
-                <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex flex-col items-center gap-2 text-center">
                   {/* Status Icon */}
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     statusDisplay === 'success' ? 'bg-green-500/20' : 'bg-red-500/20'
                   }`}>
                     {statusDisplay === 'success' ? (
-                      <CheckCircle className="w-7 h-7 text-green-400" />
+                      <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
-                      <XCircle className="w-7 h-7 text-red-400" />
+                      <XCircle className="w-4 h-4 text-red-400" />
                     )}
                   </div>
                   
                   {/* Status Text */}
                   <div>
-                    <div className={`text-xl font-semibold ${
+                    <div className={`text-sm font-semibold ${
                       statusDisplay === 'success' ? 'text-green-400' : 'text-red-400'
                     }`}>
                       {statusDisplay === 'success' ? 'Success' : 'Failed'}
                     </div>
-                    <div className="text-sm text-gray-400 mt-2">
+                    <div className="text-[11px] text-gray-400 mt-0.5">
                       {statusMessage}
                     </div>
                   </div>

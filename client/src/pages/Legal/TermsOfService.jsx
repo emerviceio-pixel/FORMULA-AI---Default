@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, FileText, Clock, Users, Lock } from 'lucide-react';
+import { FileText, Clock, Users, Lock } from 'lucide-react';
 
 const TermsOfService = () => {
   return (

@@ -718,7 +718,7 @@ const ProfileSetup = ({ editMode = false }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="min-h-screen  bg-gray-900/95 from-gray-950 via-gray-900 to-gray-950">
       {/* Subtle Background Pattern */}
       <div className="fixed inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{

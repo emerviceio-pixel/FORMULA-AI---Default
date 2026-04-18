@@ -60,7 +60,6 @@ const subscriptionController = {
         throw new Error(paystackResponse.message);
       }
     } catch (error) {
-      console.error('Initialize payment error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Payment initialization failed. Please try again.' 
@@ -138,13 +137,11 @@ const subscriptionController = {
             subscriptionExpiry: currentPeriodEnd
           });
           
-          console.log(`Cancellation scheduled for user ${user._id}. Premium until ${currentPeriodEnd}`);
         }
       }
       
       res.status(200).send('Webhook processed');
     } catch (error) {
-      console.error('Webhook processing error:', error);
       res.status(500).send('Webhook processing failed');
     }
   },
@@ -203,7 +200,6 @@ const subscriptionController = {
         });
       }
     } catch (error) {
-      console.error('Verify payment error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Verification failed' 
@@ -254,7 +250,6 @@ const subscriptionController = {
         });
       }
     } catch (error) {
-      console.error('Cancel subscription error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to cancel subscription. Please contact support.' 
@@ -289,7 +284,6 @@ const subscriptionController = {
         expiryDate: user.subscriptionExpiry
       });
     } catch (error) {
-      console.error('Get subscription status error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch subscription status' 

@@ -10,9 +10,9 @@ import { ghanaianFoodsRestaurants } from '../../hooks/ghanaianFoods';
 import SuggestionsDropdown from '../../components/SuggestionsDropdown';
 
 import {
-  Clock, CheckCircle, AlertTriangle, XCircle,
-  X, Loader, RefreshCw, ThumbsUp, ThumbsDown,
-  Sparkles, ChevronRight, Utensils, ArrowRight
+  CheckCircle, AlertTriangle, XCircle,
+  X,  RefreshCw, ThumbsUp, ThumbsDown,
+  Sparkles, ArrowRight
 } from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────────── */
@@ -76,7 +76,6 @@ const Dashboard = () => {
   const { formattedTime: countdownTime } = useCountdown(
     resetTimestamp,
     () => {
-      console.log('Countdown expired, refreshing scan status...');
       refreshScanStatus();
     }
   );
@@ -97,7 +96,6 @@ const Dashboard = () => {
         setUserFeedback(data.feedbackType);
       }
     } catch (error) {
-      console.error('Error fetching feedback:', error);
     } finally {
       setIsLoadingFeedback(false);
     }
@@ -123,7 +121,6 @@ const Dashboard = () => {
           }
         
       } catch (error) {
-        console.error('Failed to fetch initial scan status:', error);
       }
     };
     
@@ -140,7 +137,6 @@ const Dashboard = () => {
         setIsModalOpen(true);
         sessionStorage.removeItem('selectedScan');
       } catch (e) {
-        console.error('Failed to parse selected scan:', e);
       }
     }
   }, []);
@@ -166,7 +162,6 @@ const Dashboard = () => {
         }
 
     } catch (error) {
-      console.error('Failed to refresh scan status:', error);
     }
     return null;
   };
@@ -276,9 +271,7 @@ const Dashboard = () => {
       setSearchQuery('');
       setSuggestedCorrection('');
       
-    } catch (error) {
-      console.error('Analysis error:', error);
-      
+    } catch (error) {      
       if (error.message === 'Failed to fetch') {
         showError('Network error. Please check your connection.');
       } else if (error.message === 'Server returned non-JSON response') {
@@ -313,7 +306,6 @@ const Dashboard = () => {
         return;
       }
     } catch (error) {
-      console.error('Failed to check regenerate limit:', error);
     }
     
     try {
@@ -388,18 +380,71 @@ const Dashboard = () => {
     }
   };
 
+  // helper: smart capitalization
+  const formatSearchText = (text) => {
+    if (!text) return text;
+
+    const lowerCaseWords = new Set([
+      "and", "with", "of", "in", "on", "at", "to", "for", "by", "or", "the"
+    ]);
+
+    const specialCases = {
+      kfc: "KFC",
+      iphone: "iPhone",
+      mcdonalds: "McDonalds",
+      usa: "USA",
+    };
+
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map((word, index) => {
+        if (!word) return word;
+
+        // special cases override everything
+        if (specialCases[word]) return specialCases[word];
+
+        // keep lowercase words unless first word
+        if (index !== 0 && lowerCaseWords.has(word)) {
+          return word;
+        }
+
+        // default: capitalize first letter
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(" ");
+  };
+
+
+  // debounce ref (put this at component level)
+  const formatTimeoutRef = useRef(null);
+
+
   const handleSearchChange = (e) => {
     const v = e.target.value;
+
+    // 1. Update immediately (natural typing)
     setSearchQuery(v);
-    
+
+    // 2. Clear correction if needed
     if (suggestedCorrection) {
       setSuggestedCorrection('');
     }
-    
+
+    // 3. Suggestions (use raw input for better matching)
     const newSuggestions = getSuggestions(v);
     setSuggestions(newSuggestions);
     setShowSuggestions(v.trim().length > 0 && newSuggestions.length > 0);
     setSelectedSuggestionIndex(-1);
+
+    // 4. Apply smart formatting AFTER user pauses typing
+    if (formatTimeoutRef.current) {
+      clearTimeout(formatTimeoutRef.current);
+    }
+
+    formatTimeoutRef.current = setTimeout(() => {
+      setSearchQuery((prev) => formatSearchText(prev));
+    }, 500); // adjust delay (400–700ms feels best)
   };
 
   const handleKeyDown = (e) => {
@@ -430,10 +475,16 @@ const Dashboard = () => {
   const handleSuggestionSelect = (suggestion) => {
     setSearchQuery(suggestion);
     setShowSuggestions(false);
+    
+    // Focus input and place cursor at the end
     setTimeout(() => {
-      const fakeEvent = { preventDefault: () => {} };
-      handleAnalyzeWithQuery(suggestion, fakeEvent);
-    }, 50);
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+        // Set cursor to the end of the text
+        const length = searchInputRef.current.value.length;
+        searchInputRef.current.setSelectionRange(length, length);
+      }
+    }, 10);
   };
 
   const getSuggestions = useCallback((query) => {
@@ -491,7 +542,7 @@ const Dashboard = () => {
   
   const inputDisabled = isLoading || (displayScanStatus && !displayScanStatus.isPremium && displayScanStatus.remaining === 0);
 
-  const dataetDisplay = countdownTime || displayScanStatus?.resetIn;
+  const resetDisplay = countdownTime || displayScanStatus?.resetIn;
 
   if (authLoading) return (
     <div className="min-h-screen bg-[#080808] flex items-center justify-center">
@@ -503,7 +554,7 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Serif+Display:ital@0;1&display=swap');
@@ -541,16 +592,21 @@ const Dashboard = () => {
         <div className="flex-1 flex flex-col">
           <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-6 sm:pb-8 lg:pb-12">
             
-            <motion.div
-              initial={{ opacity:0, y:18 }}
-              animate={{ opacity:1, y:0 }}
-              transition={{ duration:.55, ease:[.16,1,.3,1] }}
-              className="mb-6 sm:mb-8 lg:mb-12"
-            >
-              <h1 className="serif text-2xl sm:text-3xl pt-7 md:text-4xl lg:text-5xl xl:text-6xl leading-tight text-white mb-2 text-center">
-                <span className="whitespace-nowrap">What are you eating today?</span>
-              </h1>
-            </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [.16, 1, .3, 1] }}
+            className="mb-6 sm:mb-8 lg:mb-12"
+          >
+            <h1 className="serif text-2xl sm:text-3xl pt-7 md:text-4xl lg:text-5xl xl:text-6xl leading-tight text-center mb-2">
+              <span className="text-gradient-main">
+                What are you eating{" "}
+              </span>
+              <span className="text-gradient-accent italic">
+                today?
+              </span>
+            </h1>
+          </motion.div>
 
             <div className="w-full max-w-3xl mx-auto mb-8 lg:mb-12">
               <motion.div
@@ -575,7 +631,7 @@ const Dashboard = () => {
                       <div className={`relative rounded-xl sm:rounded-2xl bg-[#0c0c0c] border transition-all duration-300 ${
                         inputFocused 
                           ? 'border-indigo-500/30 shadow-[0_0_0_1px_rgba(99,102,241,0.15),0_8px_40px_rgba(0,0,0,0.4)]' 
-                          : 'border-white/[0.06] group-hover:border-white/[0.1] shadow-lg'
+                          : 'border-white/[0.1] group-hover:border-white/[0.1] shadow-lg'
                       }`}>
                         
                         <AnimatePresence>
@@ -584,12 +640,40 @@ const Dashboard = () => {
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
-                              className="absolute inset-0 bg-[#0a0a0a]/90 backdrop-blur-sm rounded-xl sm:rounded-2xl z-20 flex items-center justify-center gap-2.5"
+                              className="absolute inset-0 bg-[#0a0a0a]/85 backdrop-blur-sm rounded-xl sm:rounded-2xl z-20 flex items-center justify-center"
                             >
-                              <div className="relative w-4 h-4">
-                                <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
+                              <div className="flex items-center gap-3">
+                                
+                                {/* Calm Thinking Dots */}
+                                <div className="flex items-center gap-1.5">
+                                  {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                      key={i}
+                                      className="w-1.5 h-1.5 rounded-full bg-indigo-400/70"
+                                      animate={{
+                                        opacity: [0.3, 1, 0.3],
+                                        scale: [0.9, 1.15, 0.9],
+                                      }}
+                                      transition={{
+                                        duration: 1.6,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                        delay: i * 0.25,
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+
+                                {/* Text */}
+                                <motion.span
+                                  className="text-xs text-gray-400 tracking-wide font-medium"
+                                  animate={{ opacity: [0.6, 1, 0.6] }}
+                                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                >
+                                  Analyzing…
+                                </motion.span>
+
                               </div>
-                              <span className="text-xs text-gray-500 tracking-wide font-medium">Analyzing…</span>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -761,7 +845,7 @@ const Dashboard = () => {
               className="mb-6 sm:mb-8 w-full"
             >
               <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="text-[10px] font-semibold text-gray-700 uppercase tracking-widest">Special Keys</span>
+                <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Special Keys</span>
               </div>
               <div className="relative w-full">
                 <div className="flex gap-2 overflow-x-auto pb-2 px-4 sm:px-6 md:justify-center md:overflow-x-visible md:flex-wrap" 
@@ -775,7 +859,7 @@ const Dashboard = () => {
                       key={item}
                       onClick={() => setSearchQuery(item)}
                       disabled={inputDisabled}
-                      className="chip flex-shrink-0 md:flex-shrink px-3.5 py-1.5 bg-white/[0.04] border border-white/[0.07] rounded-full text-[12px] text-gray-500 disabled:opacity-20 disabled:cursor-not-allowed whitespace-nowrap"
+                      className="chip flex-shrink-0 md:flex-shrink px-3.5 py-1.5 bg-white/[0.04] border border-white/[0.1] rounded-full text-[12px] text-gray-500 disabled:opacity-20 disabled:cursor-not-allowed whitespace-nowrap"
                     >
                       {item}
                     </button>
@@ -818,7 +902,7 @@ const Dashboard = () => {
                   className="fixed bottom-0 left-0 right-0 z-50 flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-[#0f0f0f] border-t border-white/[0.07] rounded-t-2xl shadow-[0_-24px_60px_rgba(0,0,0,0.7)] max-h-[88vh] flex flex-col overflow-hidden">
+                  <div className="bg-gray-900/90 backdrop-blur-xl border-t border-white/[0.1] rounded-t-2xl shadow-[0_-24px_60px_rgba(0,0,0,0.7)] max-h-[88vh] flex flex-col overflow-hidden">
                     <div
                       ref={handleRef}
                       onPointerDown={onPointerDown}
@@ -858,7 +942,7 @@ const Dashboard = () => {
                   onClick={closeModal}
                 >
                   <div
-                    className="bg-[#0f0f0f] border border-white/[0.07] rounded-2xl w-full max-w-lg lg:max-w-2xl xl:max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl"
+                    className="bg-[#0f0f0f] border border-white/[0.1] rounded-2xl w-full max-w-lg lg:max-w-2xl xl:max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="p-6 lg:p-8">
@@ -920,7 +1004,7 @@ const ModalContent = ({ result, meta, StatusIcon, isLoading, userFeedback, isSub
         <div className="flex flex-col pt-2">
           {showTriggerTag && (
             <div className="inline-flex items-center px-3 py-1.5 rounded-full mb-1">
-              <span className="text-[11px] font-medium text-red-400">{triggerDisplay}</span>
+              <span className="text-[11px] font-medium text-blue-400">{triggerDisplay}</span>
             </div>
           )}
           <h2 className="text-2xl lg:text-3xl pt-4 text-white mt-0 mb-0 leading-snug" style={{ fontFamily: "'DM Serif Display', serif" }}>

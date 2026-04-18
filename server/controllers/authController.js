@@ -101,7 +101,6 @@ class AuthController {
         }
       });
     } catch (error) {
-      console.error('Get current user error:', error);
       return res.status(500).json({
         success: false,
         error: 'Server error'

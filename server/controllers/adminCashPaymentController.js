@@ -111,7 +111,6 @@ const adminCashPaymentController = {
         }
       });
     } catch (error) {
-      console.error('Cash payment error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to process cash payment' 
@@ -133,7 +132,6 @@ const adminCashPaymentController = {
         data: pendingPayments
       });
     } catch (error) {
-      console.error('Get pending cash payments error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch pending payments' 
@@ -184,7 +182,6 @@ const adminCashPaymentController = {
         message: 'Cash payment verified successfully'
       });
     } catch (error) {
-      console.error('Verify cash payment error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to verify payment' 

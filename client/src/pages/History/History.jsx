@@ -4,7 +4,6 @@ import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion'
 import { useToast } from '../../hooks/useToast';
 import { apiFetch } from '../../services/api';
 import {
-  Clock,
   Search,
   Filter,
   X,
@@ -19,7 +18,6 @@ import {
   RefreshCw,
   ThumbsUp,
   ThumbsDown,
-  Sparkles,
   Trash2
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -62,7 +60,7 @@ const getMeta = (s) => statusMeta[s?.toLowerCase()] ?? statusMeta.safe;
 const HistorySkeleton = () => (
   <div className="space-y-2">
     {[...Array(5)].map((_, i) => (
-      <div key={i} className="flex items-center gap-4 px-5 py-4 animate-pulse bg-[#0d0d0d] rounded-xl">
+      <div key={i} className="flex items-center gap-4 px-5 py-4 animate-pulse bg-gray-900/95 rounded-xl">
         <div className="w-2 h-2 rounded-full bg-white/5 flex-shrink-0" />
         <div className="flex-1 space-y-1.5">
           <div className="w-1/3 h-3 bg-white/5 rounded" />
@@ -142,7 +140,7 @@ const ActionSheet = ({ isOpen, onClose, item, onDelete, formatDate }) => {
         className="fixed bottom-0 left-0 right-0 z-50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#0f0f0f] rounded-t-2xl border-t border-white/[0.07] overflow-hidden">
+        <div className="bg-gray-900/90 backdrop-blur-xl rounded-t-2xl border-t border-white/[0.1] overflow-hidden">
           {/* Drag Handle */}
           <div className="flex justify-center pt-3 pb-2">
             <div className="w-10 h-1 bg-white/20 rounded-full" />
@@ -319,7 +317,7 @@ const ModalContent = ({ result, meta, StatusIcon, userFeedback, isSubmitting, is
           ['Portion', result.maxServing || result.recommendedPortion]
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-3.5 lg:p-4">
-            <p className="text-[10px] text-gray-700 uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{label}</p>
             <p className="text-sm lg:text-base text-white">{value || 'N/A'}</p>
           </div>
         ))}
@@ -327,7 +325,7 @@ const ModalContent = ({ result, meta, StatusIcon, userFeedback, isSubmitting, is
 
       {result.tips?.length > 0 && (
         <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4 lg:p-5 mb-3">
-          <p className="text-[10px] text-gray-700 uppercase tracking-wider mb-2.5">Tips</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2.5">Tips</p>
           <ul className="space-y-2">
             {result.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm lg:text-base text-gray-300">
@@ -341,7 +339,7 @@ const ModalContent = ({ result, meta, StatusIcon, userFeedback, isSubmitting, is
 
       {result.alternatives?.length > 0 && (
         <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4 lg:p-5 mb-5">
-          <p className="text-[10px] text-gray-700 uppercase tracking-wider mb-2.5">Alternatives</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2.5">Alternatives</p>
           <div className="flex flex-wrap gap-1.5">
             {result.alternatives.map((alt, i) => (
               <span key={i} className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg text-[11px] lg:text-xs border border-indigo-500/20">
@@ -464,7 +462,6 @@ const History = () => {
         setUserFeedback(data.feedbackType);
       }
     } catch (error) {
-      console.error('Error fetching feedback:', error);
     } finally {
       setIsLoadingFeedback(false);
     }
@@ -512,7 +509,6 @@ const History = () => {
         showError(data.error || 'Failed to load history');
       }
     } catch (error) {
-      console.error('Error fetching scans:', error);
       showError('Failed to load scan history');
     } finally {
       loadingSetter(false);
@@ -635,7 +631,6 @@ const History = () => {
         return false;
       }
     } catch (error) {
-      console.error('Delete error:', error);
       showError('Failed to delete item');
       return false;
     }
@@ -668,7 +663,6 @@ const History = () => {
         showError(data.error || 'Failed to delete items');
       }
     } catch (error) {
-      console.error('Batch delete error:', error);
       showError('Failed to delete items');
     } finally {
       setIsDeletingBatch(false);
@@ -845,53 +839,8 @@ const History = () => {
     { value: 'unsafe', label: 'Unsafe', color: 'rose' }
   ];
 
-  return (
-    <div className="min-h-screen bg-[#080808] text-white overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Serif+Display:ital@0;1&display=swap');
-        
-        #grain {
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          z-index: 9999;
-          opacity: 0.03;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-        
-        .serif {
-          font-family: 'DM Serif Display', Georgia, serif;
-        }
-        
-        .scan-card {
-          transition: all 0.2s ease;
-        }
-        
-        .scan-card:hover {
-          background: rgba(255, 255, 255, 0.03);
-          transform: translateX(4px);
-        }
-        
-        ::-webkit-scrollbar {
-          width: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.06);
-          border-radius: 99px;
-        }
-        
-        .h-safe-bottom {
-          height: env(safe-area-inset-bottom);
-        }
-      `}</style>
-
-      <div id="grain" />
-      
-      <div className="fixed inset-0 pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)',
-        backgroundSize: '48px 48px',
-      }} />
+return (
+  <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
 
       <div className="relative min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col">
@@ -946,39 +895,49 @@ const History = () => {
               className="mb-6"
             >
               <div className="flex flex-row gap-3">
+                {/* Search Input */}
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-700" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none z-10" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by food name, restaurant or special key..."
-                    className="w-full pl-10 pr-4 py-3 bg-[#111] border border-white/[0.07] rounded-xl text-sm text-white placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-900/40 backdrop-blur-sm border border-white/[0.07] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/40 focus:bg-gray-900/60 transition-all"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <X className="w-4 h-4 text-gray-700 hover:text-gray-500" />
+                    <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/5 rounded-lg transition-colors">
+                      <X className="w-3.5 h-3.5 text-gray-600 hover:text-gray-400" />
                     </button>
                   )}
                 </div>
                 
+                {/* Mobile Filter Button - Same row as search */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center justify-center px-3 py-3 bg-[#111] border border-white/[0.07] rounded-xl text-sm text-gray-400 hover:text-white transition-colors"
+                  className="sm:hidden flex items-center justify-center w-11 h-11 bg-gray-900/40 backdrop-blur-sm border border-white/[0.07] rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/60 transition-all"
                 >
                   <Filter className="w-4 h-4" />
                 </button>
                 
+                {/* Desktop Filters - Same row */}
                 <div className="hidden sm:flex items-center gap-3">
-                  <div className="flex items-center gap-1 bg-[#111] border border-white/[0.07] rounded-xl p-1">
+                  {/* Status Filters */}
+                  <div className="flex items-center gap-1 bg-gray-900/40 backdrop-blur-sm border border-white/[0.07] rounded-xl p-1">
                     {statusFilters.map((filter) => (
                       <button
                         key={filter.value || 'all'}
                         onClick={() => setSelectedStatus(filter.value)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           selectedStatus === filter.value
-                            ? `bg-${filter.color}-500/20 text-${filter.color}-400`
-                            : 'text-gray-600 hover:text-gray-400'
+                            ? filter.value === 'safe'
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : filter.value === 'cautious'
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : filter.value === 'unsafe'
+                              ? 'bg-rose-500/20 text-rose-400'
+                              : 'bg-indigo-500/20 text-indigo-400'
+                            : 'text-gray-500 hover:text-gray-300'
                         }`}
                       >
                         {filter.label}
@@ -986,9 +945,10 @@ const History = () => {
                     ))}
                   </div>
                   
+                  {/* Sort Button */}
                   <button
                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#111] border border-white/[0.07] rounded-xl text-xs text-gray-400 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-900/40 backdrop-blur-sm border border-white/[0.07] rounded-xl text-xs text-gray-400 hover:text-white hover:bg-gray-800/60 transition-all"
                   >
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     {sortOrder === 'desc' ? 'Newest first' : 'Oldest first'}
@@ -996,6 +956,7 @@ const History = () => {
                 </div>
               </div>
               
+              {/* Mobile Filters Dropdown - Only visible on mobile when toggled */}
               <AnimatePresence>
                 {showFilters && (
                   <motion.div
@@ -1004,15 +965,22 @@ const History = () => {
                     exit={{ opacity: 0, height: 0 }}
                     className="sm:hidden mt-3 space-y-3 overflow-hidden"
                   >
-                    <div className="flex flex-wrap gap-2">
+                    {/* Status Filters */}
+                    <div className="flex flex-wrap gap-2 p-3 bg-gray-900/40 backdrop-blur-sm border border-white/[0.07] rounded-xl">
                       {statusFilters.map((filter) => (
                         <button
                           key={filter.value || 'all'}
                           onClick={() => setSelectedStatus(filter.value)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                             selectedStatus === filter.value
-                              ? `bg-${filter.color}-500/20 text-${filter.color}-400 border border-${filter.color}-500/20`
-                              : 'bg-[#111] text-gray-600 border border-white/[0.07]'
+                              ? filter.value === 'safe'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'
+                                : filter.value === 'cautious'
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20'
+                                : filter.value === 'unsafe'
+                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/20'
+                                : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20'
+                              : 'bg-gray-800/40 text-gray-500 border border-white/[0.05] hover:text-gray-300'
                           }`}
                         >
                           {filter.label}
@@ -1020,9 +988,10 @@ const History = () => {
                       ))}
                     </div>
                     
+                    {/* Sort Button - Mobile */}
                     <button
                       onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                      className="flex items-center justify-between w-full px-4 py-2.5 bg-[#111] border border-white/[0.07] rounded-xl text-sm text-gray-400"
+                      className="flex items-center justify-between w-full px-4 py-2.5 bg-gray-900/40 backdrop-blur-sm border border-white/[0.07] rounded-xl text-sm text-gray-400 hover:text-white hover:bg-gray-800/60 transition-all"
                     >
                       <span>Sort by date</span>
                       <div className="flex items-center gap-1">
@@ -1031,8 +1000,12 @@ const History = () => {
                       </div>
                     </button>
                     
+                    {/* Clear Filters Button */}
                     {(selectedStatus || sortOrder !== 'desc') && (
-                      <button onClick={clearFilters} className="w-full py-2.5 text-center text-xs text-indigo-400">
+                      <button 
+                        onClick={clearFilters} 
+                        className="w-full py-2.5 text-center text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
                         Clear all filters
                       </button>
                     )}
@@ -1132,7 +1105,7 @@ const History = () => {
                   
                   {!hasMore && scans.length > 0 && (
                     <div className="text-center py-8">
-                      <p className="text-xs text-gray-700">✨ You've seen all {totalCount} scans</p>
+                      <p className="text-xs text-gray-700">All {totalCount} scans</p>
                     </div>
                   )}
                 </div>
@@ -1217,7 +1190,7 @@ const History = () => {
                 className="fixed bottom-0 left-0 right-0 z-50 flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="bg-[#0f0f0f] border-t border-white/[0.07] rounded-t-2xl shadow-[0_-24px_60px_rgba(0,0,0,0.7)] max-h-[88vh] flex flex-col overflow-hidden">
+                <div className="bg-gray-900/95 backdrop-blur-2xl border border-white/[0.15] rounded-t-2xl shadow-[0_-24px_60px_rgba(0,0,0,0.7)] max-h-[88vh] flex flex-col overflow-hidden">
                   <div
                     ref={handleRef}
                     onPointerDown={onPointerDown}

@@ -6,11 +6,11 @@ import { apiFetch } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, Crown, TrendingUp, Globe, Shield, Mail,
+  Users, Crown, Globe, Shield, Mail,
   ThumbsUp, ThumbsDown, BarChart3, AlertCircle, Sparkles,
   Filter, X, RefreshCw, Activity, Award, Zap,
-  ChevronLeft, ChevronRight, Eye, EyeOff, DollarSign,
-  Calendar, CreditCard, Clock, CheckCircle, XCircle, 
+  ChevronLeft, ChevronRight, DollarSign,
+  Calendar, CreditCard, CheckCircle, XCircle, 
   Smartphone, CreditCard as CardIcon, Wallet, MoreHorizontal,
    Download, FileText, FileJson
 } from 'lucide-react';

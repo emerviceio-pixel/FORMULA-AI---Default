@@ -18,7 +18,6 @@ class RecommendationService {
 
       return recentRecs;
     } catch (error) {
-      console.error('Error fetching recent recommendations:', error);
       return [];
     }
   }
@@ -86,7 +85,6 @@ class RecommendationService {
       console.log(`✅ Tracked new ${triggerType} recommendation: ${recommendedItem}${price ? ` (${price})` : ''}`);
       return recommendation;
     } catch (error) {
-      console.error('Error tracking recommendation:', error);
       return null;
     }
   }
@@ -112,7 +110,6 @@ class RecommendationService {
       const limit = triggerType === 'RESTAURANT_NAME' ? 15 : 25;
       return safeRecommendations.length >= limit;
     } catch (error) {
-      console.error('Error checking exhaustion:', error);
       return false;
     }
   }
@@ -135,7 +132,6 @@ class RecommendationService {
 
       return !!recent;
     } catch (error) {
-      console.error('Error checking recent recommendation:', error);
       return false;
     }
   }
@@ -172,7 +168,6 @@ class RecommendationService {
         canRepeat: true
       };
     } catch (error) {
-      console.error('Error getting available items:', error);
       return {
         avoidItems: [],
         canRepeat: true
@@ -191,7 +186,6 @@ class RecommendationService {
         { new: true }
       );
     } catch (error) {
-      console.error('Error updating feedback:', error);
       return null;
     }
   }
@@ -218,7 +212,6 @@ class RecommendationService {
 
       return stats;
     } catch (error) {
-      console.error('Error getting recommendation stats:', error);
       return [];
     }
   }
@@ -248,11 +241,9 @@ class RecommendationService {
         if (oldestToDelete.length > 0) {
           const idsToDelete = oldestToDelete.map(doc => doc._id);
           await Recommendation.deleteMany({ _id: { $in: idsToDelete } });
-          console.log(`🧹 Manually cleaned up ${excess} old recommendations for ${triggerType}: ${triggerValue}`);
         }
       }
     } catch (error) {
-      console.error('Error during manual cleanup:', error);
     }
   }
 }

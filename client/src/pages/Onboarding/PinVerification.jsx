@@ -53,6 +53,7 @@ const PinVerification = () => {
   const [attempts, setAttempts] = useState(0);
   const [lockoutTime, setLockoutTime] = useState(0);
   const [showResetForm, setShowResetForm] = useState(false);
+  const [pinMismatch, setPinMismatch] = useState(false);
   const [resetData, setResetData] = useState({
     recoveryWord: '',
     newPin: ['', '', '', ''],
@@ -140,6 +141,9 @@ const PinVerification = () => {
     newPin[index] = value;
     setResetData(prev => ({ ...prev, newPin }));
     
+    // Reset mismatch when user changes new PIN
+    setPinMismatch(false);
+    
     if (value && index < 3) {
       setFocusedResetIndex(index + 1);
       setTimeout(() => {
@@ -170,6 +174,11 @@ const PinVerification = () => {
     const newPin = [...resetData.confirmPin];
     newPin[index] = value;
     setResetData(prev => ({ ...prev, confirmPin: newPin }));
+    
+    // Live mismatch check
+    const newPinValue = resetData.newPin.join('');
+    const confirmPinValue = newPin.join('');
+    setPinMismatch(newPinValue !== confirmPinValue && newPinValue.length === 4 && newPin.join('').length === 4);
     
     if (value && index < 3) {
       setFocusedConfirmIndex(index + 1);
@@ -242,7 +251,6 @@ const PinVerification = () => {
           setLockoutTime(status.remainingTime || 0);
         }
       } catch (error) {
-        console.error('Failed to load attempt status:', error);
       }
     };
 
@@ -342,23 +350,11 @@ const PinVerification = () => {
     try {
       await resetPin(recoveryWord, newPinStr);
       setModalState('success');
-      setModalMessage('PIN reset successful! Please login with your new PIN.');
+      setModalMessage('Successful! Login with your new PIN.');
       
-      setTimeout(() => {
-        setShowResetForm(false);
-        setResetData({
-          recoveryWord: '',
-          newPin: ['', '', '', ''],
-          confirmPin: ['', '', '', '']
-        });
-        setPin(['', '', '', '']);
-        setFocusedPinIndex(0);
-        setAttempts(0);
-        setLockoutTime(0);
         setTimeout(() => {
-          inputRefs.current[0]?.focus();
-        }, 10);
-      }, 1500);
+          navigate('/onboarding', { replace: true });
+        }, 1500);
     } catch (error) {
       setModalState('failed');
       setModalMessage(error.message || 'PIN reset failed. Check your recovery word.');
@@ -530,6 +526,12 @@ const PinVerification = () => {
                     handleConfirmPinChange,
                     handleConfirmPinKeyDown,
                     confirmInputRefs
+                  )}
+                  {pinMismatch && (
+                    <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg animate-in fade-in duration-200">
+                      <AlertCircle className="w-4 h-4 text-amber-400" />
+                      <p className="text-xs text-amber-400">PINs don't match. Please try again.</p>
+                    </div>
                   )}
                 </div>
 

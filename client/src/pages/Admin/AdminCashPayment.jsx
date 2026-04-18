@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Wallet, Search, User, Calendar, CheckCircle, 
-  XCircle, Clock, DollarSign, FileText 
+  Wallet, Search, User,  CheckCircle
 } from 'lucide-react';
 import { apiFetch } from '../../services/api';
 
@@ -32,7 +31,6 @@ const AdminCashPayment = () => {
         alert('User not found');
       }
     } catch (error) {
-      console.error('Search failed:', error);
     } finally {
       setLoading(false);
     }
@@ -54,7 +52,6 @@ const AdminCashPayment = () => {
         // Show success message
       }
     } catch (error) {
-      console.error('Payment processing failed:', error);
     } finally {
       setLoading(false);
     }

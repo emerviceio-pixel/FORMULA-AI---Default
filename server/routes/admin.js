@@ -8,12 +8,10 @@ const adminCashPaymentController = require('../controllers/adminCashPaymentContr
 
 router.post('/cash-payment', 
   (req, res, next) => {
-    console.log('➡️ Route hit');
     next();
   },
   requireAdmin,
   (req, res, next) => {
-    console.log('✅ After requireAdmin, req.user:', !!req.user);
     next();
   },
   cashPaymentLimiter, 

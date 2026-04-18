@@ -18,7 +18,6 @@ const requireAdmin = async (req, res, next) => {
      req.user = user;
     next();
   } catch (error) {
-    console.error('Admin middleware error:', error);
     return res.status(500).json({ success: false, error: 'Server error' });
   }
 };

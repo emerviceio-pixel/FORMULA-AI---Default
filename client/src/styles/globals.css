@@ -190,3 +190,21 @@
 .h-safe-bottom {
   height: env(safe-area-inset-bottom);
 }
+
+.serif {
+  font-family: "Playfair Display", "Georgia", serif;
+}
+
+/* Main white → soft blue */
+.text-gradient-main {
+  background: linear-gradient(90deg, #ffffff, #cbd5ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Accent for "today?" (slightly more purple/blue) */
+.text-gradient-accent {
+  background: linear-gradient(90deg, #cbd5ff, #a5b4fc, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

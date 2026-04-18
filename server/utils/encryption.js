@@ -25,7 +25,6 @@ function decrypt(encryptedText) {
   try {
     const [ivHex, authTagHex, encryptedHex] = encryptedText.split(':');
     if (!ivHex || !authTagHex || !encryptedHex) {
-      console.log('Missing parts in encrypted text');
       return [];
     }
     
@@ -39,7 +38,6 @@ function decrypt(encryptedText) {
     
     return JSON.parse(decrypted.toString('utf8'));
   } catch (error) {
-    console.error('DECRYPTION FAILED:', error.message);
     return [];
   }
 }

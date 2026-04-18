@@ -164,7 +164,6 @@ const adminController = {
         }
       });
     } catch (error) {
-      console.error('Monthly revenue error:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch revenue data' 

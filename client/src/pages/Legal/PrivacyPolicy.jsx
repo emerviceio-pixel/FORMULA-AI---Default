@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, FileText, Database, Users, Lock, EyeOff } from 'lucide-react';
+import { FileText, Database,  Lock, EyeOff } from 'lucide-react';
 
 const PrivacyPolicy = () => {
   return (

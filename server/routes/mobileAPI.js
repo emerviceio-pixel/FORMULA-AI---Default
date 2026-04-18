@@ -54,7 +54,6 @@ router.post('/login', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Mobile login error:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Login failed' 

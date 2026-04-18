@@ -89,7 +89,6 @@ const submitFeedback = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Feedback error:', error);
     
     // Handle duplicate key error from unique index
     if (error.code === 11000) {
@@ -125,7 +124,6 @@ const getFeedbackStatus = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error fetching feedback status:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch feedback status' });
   }
 };
@@ -158,7 +156,6 @@ const getFeedbackStats = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error fetching feedback stats:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch feedback stats' });
   }
 };

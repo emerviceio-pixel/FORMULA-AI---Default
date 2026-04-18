@@ -1,96 +1,98 @@
-const { decrypt: systemDecrypt } = require('../utils/encryption');
-
-// ✅ Gemini setup
 // server/services/AIService.js
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { decrypt: systemDecrypt } = require('../utils/encryption');
 const RecommendationService = require('./RecommendationService');
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+const Groq = require('groq-sdk');
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+// Google Gemini API
+//const { GoogleGenerativeAI } = require("@google/generative-ai");
+//const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+//const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+
+/*
+ // Shared AI calling function
+async function callGeminiAPI(prompt, fallbackName) {
+  try {
+    const result = await model.generateContent(prompt);
+    const aiText = result.response.text();
+    
+    let cleaned = aiText.trim();
+    cleaned = cleaned.replace(/```json\s*|\s*```/g, '');
+    const jsonMatch = cleaned.match(/({[\s\S]*})/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[1]);
+      
+      // Extract clean food name for recommendations
+      parsed.foodName = parsed.foodName || fallbackName;
+      
+      return parsed;
+    }
+    throw new Error('No JSON found');
+  } catch (error) {
+    // Fallback response
+    return {
+      status: 'SAFE',
+      reason: `Excellent choice for your profile.`,
+      tips: ['Enjoy in moderation', 'Monitor your body\'s response'],
+      maxServing: 'As recommended',
+      bestTime: 'Any time',
+      foodName: fallbackName
+    };
+  }
+}
+ */
 
 // Shared AI calling function
 async function callGeminiAPI(prompt, fallbackName, isRegenerate = false) {
   try {
     const temperature = isRegenerate ? 0.9 : 0.7;
     
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: temperature,
-        maxOutputTokens: 2048,
-        topP: isRegenerate ? 0.95 : 0.8,
-      },
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "You are a Strict professional dietitian and a nutritionist. Always respond with valid JSON only, no markdown formatting."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      model: "llama-3.3-70b-versatile",
+      temperature: temperature,
+      max_tokens: 800,
+      top_p: isRegenerate ? 0.95 : 0.8,
+      stream: false,
     });
 
-    const aiText = result.response.text();
+    const aiText = completion.choices[0]?.message?.content || '';
+    let cleaned = aiText.trim().replace(/```json\s*|\s*```/g, '');
     
-    // Log the raw response for debugging
-    console.log('Raw AI response:', aiText);
-    
-    // Clean the response
-    let cleaned = aiText.trim();
-    cleaned = cleaned.replace(/```json\s*|\s*```/g, '');
-    cleaned = cleaned.replace(/```\s*|\s*```/g, '');
-    
-    // Try multiple JSON extraction methods
-    let parsed = null;
-    
-    // Method 1: Find JSON object
     const jsonMatch = cleaned.match(/({[\s\S]*})/);
     if (jsonMatch) {
-      try {
-        parsed = JSON.parse(jsonMatch[1]);
-      } catch (e) {
-        console.log('Failed to parse JSON from match, trying fallback');
-      }
+      const parsed = JSON.parse(jsonMatch[1]);
+      parsed.foodName = parsed.foodName || fallbackName;
+      return parsed;
     }
     
-    // Method 2: If still not parsed, try parsing the whole cleaned string
-    if (!parsed) {
-      try {
-        parsed = JSON.parse(cleaned);
-      } catch (e) {
-        console.log('Failed to parse full cleaned string');
-      }
-    }
-    
-    // Method 3: If still not parsed, try to extract with regex for each field
-    if (!parsed) {
-      parsed = {};
-      const statusMatch = cleaned.match(/"status"\s*:\s*"([^"]+)"/i);
-      const foodNameMatch = cleaned.match(/"foodName"\s*:\s*"([^"]+)"/i);
-      const reasonMatch = cleaned.match(/"reason"\s*:\s*"([^"]+)"/i);
-      
-      if (foodNameMatch) parsed.foodName = foodNameMatch[1];
-      if (statusMatch) parsed.status = statusMatch[1];
-      if (reasonMatch) parsed.reason = reasonMatch[1];
-      
-      // Set defaults for missing fields
-      parsed.tips = parsed.tips || ['Enjoy in moderation', 'Monitor your body\'s response'];
-      parsed.maxServing = parsed.maxServing || 'As recommended';
-      parsed.bestTime = parsed.bestTime || 'Any time';
-      parsed.alternatives = parsed.alternatives || [];
-    }
-    
-    parsed.foodName = parsed.foodName || fallbackName;
-    parsed.status = parsed.status || 'SAFE';
-    parsed.reason = parsed.reason || `Excellent choice for your profile.`;
-    
-    return parsed;
-    
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    
-    // Return fallback response
+    // Fallback response
     return {
       status: 'SAFE',
       reason: `Based on your profile, this is an excellent choice.`,
       tips: ['Enjoy in moderation', 'Monitor your body\'s response'],
       maxServing: 'As recommended',
       bestTime: 'Any time',
-      foodName: fallbackName,
-      alternatives: []
+      foodName: fallbackName
+    };
+  } catch (error) {
+    return {
+      status: 'SAFE',
+      reason: `This option aligns well with your dietary needs.`,
+      tips: ['Consider portion control', 'Stay hydrated'],
+      maxServing: '1 serving',
+      bestTime: 'Morning or afternoon',
+      foodName: fallbackName
     };
   }
 }
@@ -101,7 +103,7 @@ async function analyzeFoodItem(foodName, user) {
   const allergies = systemDecrypt(user.allergiesSystemEncrypted) || [];
 
   const prompt = `
-As a Ruthless professional nutritionist, analyze this ${foodName} for this user.
+As a Strict professional dietitian and a nutritionist, analyze this ${foodName} for your user.
 
 User Profile:
 - Country: ${user.country}
@@ -112,7 +114,12 @@ User Profile:
 - Activity Level: ${user.activityLevel}
 - Age: ${user.dateOfBirth}
 
-CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON.
+CRITICAL RULES:
+1. If status is CAUTIOUS or UNSAFE, you MUST provide 2-3 alternatives
+2. Alternatives must be SAFER than the original item for THIS SPECIFIC USER
+3. Consider the user's health conditions and allergies when determining what is SAFE vs UNSAFE
+4. If ${foodName} has abnormal combinations that could be harmful, status = "UNSAFE". eg, Coca Cola with eggs, Plantain with soda, nutella and coffee, etc. In such cases, provide alternatives that are safe and do not have harmful interactions.
+IMPORTANT: alternatives must be a simple array of strings only. Do NOT include objects or reasons.
 
 Provide analysis in EXACT JSON format:
 {
@@ -122,7 +129,7 @@ Provide analysis in EXACT JSON format:
   "maxServing": "Recommended portion",
   "bestTime": "Best time to consume",
   "alternatives": []
-}`;
+`;
 
   return await callGeminiAPI(prompt, foodName);
 }
@@ -131,7 +138,8 @@ Provide analysis in EXACT JSON format:
 async function generateRecommendation(mealType, user, lastItem = null) {
   const conditions = systemDecrypt(user.healthConditionsSystemEncrypted) || [];
   const allergies = systemDecrypt(user.allergiesSystemEncrypted) || [];
-  
+
+  // Get recent recommendations to avoid repetition
   const recentHistory = await RecommendationService.getRecommendationHistoryForPrompt(
     user._id,
     'SPECIAL_KEY',
@@ -139,11 +147,13 @@ async function generateRecommendation(mealType, user, lastItem = null) {
   );
 
   const prompt = `
-You are a Ruthless professional nutritionist. Recommend ONE SPECIFIC ${mealType} food item for this user.
+You are a Strict professional nutritionist and a dietitian for this user. Recommend ONE SPECIFIC ${mealType} food item.
 
 ${recentHistory}
 
 ${lastItem ? `Last recommended: ${lastItem}. Please suggest something different.` : ''}
+
+IMPORTANT: DO NOT recommend any of the items listed above. Suggest something different.
 
 User Profile:
 - Country: ${user.country}
@@ -154,20 +164,17 @@ User Profile:
 - Activity Level: ${user.activityLevel}
 - Age: ${user.dateOfBirth}
 
-CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON.
-
-Your response's "reason" field MUST start with: "I recommend [FOOD NAME]."
-
 Provide analysis in EXACT JSON format:
 { 
-  "foodName": "The specific food item you're recommending",
+  "foodName": "The specific food item you're recommending (make it unique and different from previous recommendations)",
   "status": "SAFE",
-  "reason": "Concisely explain why this specific food is excellent for the user",
+  "reason": "Concise explanation why this specific food is excellent for your user",
   "tips": ["Preparation tip", "Portion guidance"],
   "maxServing": "Recommended frequency",
   "bestTime": "Optimal time window",
   "alternatives": []
-}`;
+}
+`;
 
   return await callGeminiAPI(prompt, mealType, !!lastItem);
 }
@@ -190,7 +197,7 @@ async function analyzeRestaurant(restaurantName, user, lastItem = null) {
   );
 
   const prompt = `
-You are a Ruthless professional nutritionist. Recommend ONE SPECIFIC menu item from ${restaurantName} for your user.
+You are Strict professional nutritionist and a dietitian. Recommend ONE SPECIFIC menu item from ${restaurantName} for your user.
 
 ${recentHistory}
 
