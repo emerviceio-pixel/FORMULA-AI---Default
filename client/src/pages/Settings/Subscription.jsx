@@ -25,21 +25,7 @@ const Subscription = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { showSuccess, showError } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState('premium');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [cardDetails, setCardDetails] = useState({
-    number: '',
-    expiry: '',
-    cvc: '',
-    name: ''
-  });
-
-  const [mobileMoney, setMobileMoney] = useState({
-    provider: '',
-    accountNumber: '',
-    countryCode: ''
-  });
 
   // Get subscription renewal date (30 days from now)
   const getRenewalDate = () => {
@@ -52,26 +38,15 @@ const Subscription = () => {
     });
   };
 
-  const plans = [
-    {
-      id: 'premium',
-      name: 'Premium',
-      price: 'GHC39.9',
-      period: 'month',
-      description: 'Everything you need for optimal health',
-      icon: <Crown className="w-5 h-5" />,
-      badge: 'Most Popular',
-      features: [
-        { text: 'Unlimited scans', included: true },
-        { text: 'Restaurant Menu Analysis', included: true },
-        { text: 'Advanced AI recommendations', included: true },
-        { text: 'Personalized meal plans', included: true },
-        { text: 'Priority health risk alerts', included: true },
-        { text: '24/7 Priority support', included: true },
-        { text: 'Ad-free experience', included: true },
-        { text: 'Early access to new features', included: true }
-      ]
-    }
+  const premiumFeatures = [
+    { text: 'Unlimited scans', included: true },
+    { text: 'Restaurant Menu Analysis', included: true },
+    { text: 'Advanced AI recommendations', included: true },
+    { text: 'Personalized meal plans', included: true },
+    { text: 'Priority health risk alerts', included: true },
+    { text: '24/7 Priority support', included: true },
+    { text: 'Ad-free experience', included: true },
+    { text: 'Early access to new features', included: true }
   ];
 
   const handleUpgrade = async () => {
@@ -79,13 +54,7 @@ const Subscription = () => {
     try {
       const paymentData = {
         plan: 'premium',
-        paymentMethod: paymentMethod,
-        ...(paymentMethod === 'mobile' && {
-          mobileMoney: {
-            provider: mobileMoney.provider,
-            accountNumber: `${mobileMoney.countryCode}${mobileMoney.accountNumber}`
-          }
-        })
+        paymentMethod: 'card'
       };
 
       const data = await apiFetch('/subscription/initialize', {
@@ -94,36 +63,15 @@ const Subscription = () => {
       });
       
       if (data.success) {
-        window.location.href = result.authorizationUrl;
+        window.location.href = data.authorizationUrl;
       } else {
-        showError(result.error);
+        showError(data.error);
       }
     } catch (error) {
       showError('Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleCardInput = (field, value) => {
-    let formattedValue = value;
-    if (field === 'number') {
-      formattedValue = value.replace(/\D/g, '').slice(0, 16);
-      if (formattedValue.length > 0) {
-        formattedValue = formattedValue.match(/.{1,4}/g).join(' ');
-      }
-    } else if (field === 'expiry') {
-      formattedValue = value.replace(/\D/g, '').slice(0, 4);
-      if (formattedValue.length > 2) {
-        formattedValue = formattedValue.slice(0, 2) + '/' + formattedValue.slice(2);
-      }
-    } else if (field === 'cvc') {
-      formattedValue = value.replace(/\D/g, '').slice(0, 3);
-    }
-    setCardDetails(prev => ({
-      ...prev,
-      [field]: formattedValue
-    }));
   };
 
   const handleCancelSubscription = async () => {
@@ -280,14 +228,14 @@ const Subscription = () => {
                     <p className="text-sm text-gray-500">Everything you need for optimal health</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-light text-white">GHC39.9</div>
+                    <div className="text-3xl font-light text-white">GHC5</div>
                     <div className="text-xs text-gray-500">per month</div>
                   </div>
                 </div>
 
                 {/* Features Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  {plans[0].features.map((feature, index) => (
+                  {premiumFeatures.map((feature, index) => (
                     <div key={index} className="flex items-start gap-2">
                       <div className="mt-0.5">
                         {feature.included ? (
@@ -305,8 +253,8 @@ const Subscription = () => {
 
                 {/* CTA Button */}
                 <button
-                  onClick={() => setSelectedPlan('premium')}
-                  className="w-full py-3 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20 text-sm font-medium"
+                  disabled
+                  className="w-full py-3 bg-primary-500/10 text-primary-400 rounded-lg border border-primary-500/20 text-sm font-medium opacity-60 cursor-not-allowed"
                 >
                   Selected Plan
                 </button>
@@ -327,7 +275,7 @@ const Subscription = () => {
                 <div className="bg-gray-800/30 rounded-lg p-4 mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-400">Premium Plan</span>
-                    <span className="text-lg font-medium text-white">GHC39.9</span>
+                    <span className="text-lg font-medium text-white">GHC5</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500">Next billing</span>
@@ -348,7 +296,7 @@ const Subscription = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-t border-gray-800">
                     <span className="text-sm text-gray-400">Total</span>
-                    <span className="text-xl font-light text-white">GHC39.9</span>
+                    <span className="text-xl font-light text-white">GHC5</span>
                   </div>
                   
                   <button
@@ -392,7 +340,7 @@ const Subscription = () => {
           transition={{ delay: 0.4 }}
           className="mt-12 pt-8 border-t border-gray-800/50"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
             {[
               { icon: <Users className="w-4 h-4" />, title: '24/7 Support', desc: 'Expert assistance anytime' },
               { icon: <Award className="w-4 h-4" />, title: 'Trusted by Thousands', desc: 'Join our health community' }

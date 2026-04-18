@@ -19,6 +19,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
 import TermsOfService from './pages/Legal/TermsOfService';
 import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
 import AdminCashPayment from './pages/Admin/AdminCashPayment.jsx';
+import SubscriptionSuccess from './pages/Subscription/Success.jsx';
 
 // Components
 import Navbar from './components/Navigation/Navbar';
@@ -48,6 +49,7 @@ function App() {
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/cash-payment" element={<AdminCashPayment />}/>
+          <Route path="/subscription/success" element={<SubscriptionSuccess />}/>
 
           {/* Authenticated routes (with navbar) */}
           <Route

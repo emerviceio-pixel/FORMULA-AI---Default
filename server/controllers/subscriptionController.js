@@ -24,7 +24,7 @@ const subscriptionController = {
       }
 
       // Payment amount (in kobo - Paystack uses smallest currency unit)
-      const amount = 3999; // GHC39.99
+      const amount = 500; // GHC5
       
       // Prepare payment data
       const paymentData = {
