@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const { validateHealthData } = require('../shared/constants');
 
 const profileController = {
   // Get user profile (masked)
@@ -42,7 +43,7 @@ const profileController = {
   },
 
   // Update profile
-  async updateProfile(req, res) {
+    async updateProfile(req, res) {
     try {
       const userId = req.session.userId;
       const updates = req.body;
@@ -62,7 +63,35 @@ const profileController = {
         });
       }
 
-      // Basic info
+      // VALIDATION: Check health conditions and allergies if provided
+      if (updates.healthConditions || updates.allergies) {
+        const conditionsToValidate = updates.healthConditions || [];
+        const allergiesToValidate = updates.allergies || [];
+        
+        const validation = validateHealthData(conditionsToValidate, allergiesToValidate);
+        
+        if (!validation.isValid) {
+          const errorMessages = [];
+          if (validation.invalidConditions.length > 0) {
+            errorMessages.push(`Unsupported health conditions: ${validation.invalidConditions.join(', ')}`);
+          }
+          if (validation.invalidAllergies.length > 0) {
+            errorMessages.push(`Unsupported allergies: ${validation.invalidAllergies.join(', ')}`);
+          }
+          
+          return res.status(400).json({
+            success: false,
+            error: 'Health data validation failed',
+            details: {
+              invalidConditions: validation.invalidConditions,
+              invalidAllergies: validation.invalidAllergies,
+              message: errorMessages.join('; ')
+            }
+          });
+        }
+      }
+
+      // Basic info (unchanged)
       if (updates.nickname) user.nickname = updates.nickname;
       if (updates.dateOfBirth) user.dateOfBirth = updates.dateOfBirth;
       if (updates.country) user.country = updates.country;
@@ -101,7 +130,7 @@ const profileController = {
       if (updates.healthConditions && updates.healthDataKey) {
         // 1. Encrypt with user's key (for profile editing)
         const userEncrypted = user.encryptHealthData(updates.healthConditions, updates.healthDataKey);
-        user.healthConditions = userEncrypted; // This is your existing field
+        user.healthConditions = userEncrypted;
 
         // 2. Encrypt with SYSTEM key (for AI analysis)
         const { encrypt: systemEncrypt } = require('../utils/encryption');
@@ -135,6 +164,7 @@ const profileController = {
         message: 'Profile updated successfully'
       });
     } catch (error) {
+      console.error('Update profile error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to update profile'
@@ -401,51 +431,21 @@ const profileController = {
   // Get predefined examples
   async getPredefinedExamples(req, res) {
     try {
+      const { HEALTH_CONDITIONS_ARRAY, ALLERGIES_ARRAY } = require('../constants');
+      
+      // Get random selection of conditions and allergies for variety
+      const getRandomSubset = (arr, count) => {
+        const shuffled = [...arr];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, count);
+      };
+
       const examples = {
-        healthConditions: [
-          'Diabetes Type 1',
-          'Diabetes Type 2',
-          'Hypertension',
-          'High Cholesterol',
-          'Heart Disease',
-          'Kidney Disease',
-          'Liver Disease',
-          'Gluten Intolerance',
-          'Lactose Intolerance',
-          'Irritable Bowel Syndrome',
-          'Crohn\'s Disease',
-          'Ulcerative Colitis',
-          'Thyroid Disorder',
-          'Asthma',
-          'Migraines',
-          'Arthritis',
-          'Osteoporosis',
-          'Anemia',
-          'GERD',
-          'PCOS'
-        ],
-        allergies: [
-          'Peanuts',
-          'Tree Nuts',
-          'Milk',
-          'Eggs',
-          'Fish',
-          'Shellfish',
-          'Wheat',
-          'Soy',
-          'Sesame',
-          'Mustard',
-          'Celery',
-          'Lupin',
-          'Molluscs',
-          'Sulphites',
-          'Latex',
-          'Pollen',
-          'Dust Mites',
-          'Mold',
-          'Pet Dander',
-          'Insect Stings'
-        ]
+        healthConditions: getRandomSubset(HEALTH_CONDITIONS_ARRAY, 12),
+        allergies: getRandomSubset(ALLERGIES_ARRAY, 10)
       };
 
       res.json({
@@ -453,6 +453,7 @@ const profileController = {
         examples
       });
     } catch (error) {
+      console.error('Get examples error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get predefined examples'

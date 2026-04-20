@@ -4,6 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
+import { 
+  VALID_HEALTH_CONDITIONS, 
+  VALID_ALLERGIES,
+  isValidHealthCondition,
+  isValidAllergy,
+  getHealthConditionSuggestions,
+  getAllergySuggestions,
+  HEALTH_CONDITIONS_LIST,
+  ALLERGIES_LIST
+} from '../../shared/constants';
 import { apiFetch } from '../../services/api';
 import ReactCountryFlag from "react-country-flag";
 import Select from "react-select";
@@ -32,7 +42,8 @@ import {
   Heart,
   ChevronRight,
   Info,
-  Loader
+  Loader, 
+  AlertTriangle
 } from 'lucide-react';
 
 import { 
@@ -300,6 +311,16 @@ const ProfileSetup = ({ editMode = false }) => {
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [decryptedConditions, setDecryptedConditions] = useState([]);
   const [decryptedAllergies, setDecryptedAllergies] = useState([]);
+  const [invalidHealthData, setInvalidHealthData] = useState({
+    conditions: [],
+    allergies: [],
+    hasInvalidData: false
+  });
+  const [customConditionInput, setCustomConditionInput] = useState('');
+  const [customAllergyInput, setCustomAllergyInput] = useState('');
+  const [conditionSuggestions, setConditionSuggestions] = useState([]);
+  const [allergySuggestions, setAllergySuggestions] = useState([]);
+
   
   // Dropdown states
   const [showDietaryGoal, setShowDietaryGoal] = useState(false);
@@ -413,14 +434,8 @@ const ProfileSetup = ({ editMode = false }) => {
     }
   ];
 
-  const predefinedConditions = [
-    'Diabetes', 'Hypertension', 'Heart Disease', 'Cholesterol', 'Typhoid Fever',
-    'Cholera', 'Stomach Ulcer', 'Liver Disease', 'Dysentary Disorders', 'Gastrointestinal Issues', 'Kidney Disease', 'Thyroid Disorders'
-  ];
-
-  const predefinedAllergies = [
-    'Peanuts', 'Tree Nuts', 'Milk', 'Eggs', 'Sugar', 'Shellfish'
-  ];
+  const predefinedConditions = HEALTH_CONDITIONS_LIST.slice(0, 12); // Show first 12 for UI
+  const predefinedAllergies = ALLERGIES_LIST.slice(0, 10); // Show first 10 for UI
 
   // Check if user already has health key
   useEffect(() => {
@@ -447,6 +462,34 @@ const ProfileSetup = ({ editMode = false }) => {
       setHasHealthKey(true);
     }
   }, [editMode, profile]);
+
+  // validation
+  const validateHealthDataSelection = (conditions, allergies) => {
+    const invalidConditions = [];
+    const invalidAllergies = [];
+    
+    conditions.forEach(condition => {
+      if (!isValidHealthCondition(condition)) {
+        invalidConditions.push(condition);
+      }
+    });
+    
+    allergies.forEach(allergy => {
+      if (!isValidAllergy(allergy)) {
+        invalidAllergies.push(allergy);
+      }
+    });
+    
+    const hasInvalidData = invalidConditions.length > 0 || invalidAllergies.length > 0;
+    
+    setInvalidHealthData({
+      conditions: invalidConditions,
+      allergies: invalidAllergies,
+      hasInvalidData
+    });
+    
+    return !hasInvalidData;
+  };
 
   // Create health key (for new users)
   const handleCreateHealthKey = async () => {
@@ -524,6 +567,15 @@ const ProfileSetup = ({ editMode = false }) => {
       showError('Please create or enter health key first');
       return;
     }
+    
+    if (action === 'add') {
+      // Validate before adding
+      if (!isValidHealthCondition(condition)) {
+        showError(`Health condition "${condition}" not supported.`);
+        return;
+      }
+    }
+    
     setFormData(prev => {
       const conditions = Array.isArray(prev.healthConditions) ? [...prev.healthConditions] : [];
       if (action === 'add' && !conditions.includes(condition)) {
@@ -534,6 +586,7 @@ const ProfileSetup = ({ editMode = false }) => {
       }
       return { ...prev, healthConditions: conditions };
     });
+    
     if (isDecrypted) {
       if (action === 'add' && !decryptedConditions.includes(condition)) {
         setDecryptedConditions(prev => [...prev, condition]);
@@ -541,7 +594,13 @@ const ProfileSetup = ({ editMode = false }) => {
         setDecryptedConditions(prev => prev.filter(c => c !== condition));
       }
     }
+    
+    // Re-validate after change
+    setTimeout(() => {
+      validateHealthDataSelection(formData.healthConditions, formData.allergies);
+    }, 0);
   };
+
 
   // Handle allergy actions
   const handleAllergy = (action, allergy) => {
@@ -549,6 +608,14 @@ const ProfileSetup = ({ editMode = false }) => {
       showError('Please create or enter health key first');
       return;
     }
+    
+    if (action === 'add') {
+      if (!isValidAllergy(allergy)) {
+        showError(`Allergy "${allergy}" not supported.`);
+        return;
+      }
+    }
+    
     setFormData(prev => {
       const allergies = Array.isArray(prev.allergies) ? [...prev.allergies] : [];
       if (action === 'add' && !allergies.includes(allergy)) {
@@ -559,6 +626,7 @@ const ProfileSetup = ({ editMode = false }) => {
       }
       return { ...prev, allergies };
     });
+    
     if (isDecrypted) {
       if (action === 'add' && !decryptedAllergies.includes(allergy)) {
         setDecryptedAllergies(prev => [...prev, allergy]);
@@ -566,7 +634,51 @@ const ProfileSetup = ({ editMode = false }) => {
         setDecryptedAllergies(prev => prev.filter(a => a !== allergy));
       }
     }
+    
+    setTimeout(() => {
+      validateHealthDataSelection(formData.healthConditions, formData.allergies);
+    }, 0);
   };
+
+  // Add suggestion handlers
+  const handleConditionInputChange = (e) => {
+    const value = e.target.value;
+    setCustomConditionInput(value);
+    const suggestions = getHealthConditionSuggestions(value);
+    setConditionSuggestions(suggestions);
+  };
+
+  const handleAllergyInputChange = (e) => {
+    const value = e.target.value;
+    setCustomAllergyInput(value);
+    const suggestions = getAllergySuggestions(value);
+    setAllergySuggestions(suggestions);
+  };
+
+  const handleAddCustomCondition = () => {
+    if (customConditionInput.trim() && isDecrypted) {
+      if (isValidHealthCondition(customConditionInput.trim())) {
+        handleHealthCondition('add', customConditionInput.trim());
+        setCustomConditionInput('');
+        setConditionSuggestions([]);
+      } else {
+        showError(`Health condition "${customConditionInput}" not supported.`);
+      }
+    }
+  };
+
+  const handleAddCustomAllergy = () => {
+    if (customAllergyInput.trim() && isDecrypted) {
+      if (isValidAllergy(customAllergyInput.trim())) {
+        handleAllergy('add', customAllergyInput.trim());
+        setCustomAllergyInput('');
+        setAllergySuggestions([]);
+      } else {
+        showError(`Allergy "${customAllergyInput}" not supported.`);
+      }
+    }
+  };
+
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -678,11 +790,21 @@ const ProfileSetup = ({ editMode = false }) => {
     setCurrentStep(1);
   };
 
- const handleSubmit = async (e) => {
-    // e may be a MouseEvent (onClick) or FormEvent — guard either way
+  const handleSubmit = async (e) => {
     if (e?.preventDefault) e.preventDefault();
 
     if (!validateStep2()) return;
+    
+    // Final validation before submission
+    const isValid = validateHealthDataSelection(
+      formData.healthConditions,
+      formData.allergies
+    );
+    
+    if (!isValid) {
+      showError('Please remove or correct invalid health data before saving');
+      return;
+    }
 
     try {
       const submissionData = {
@@ -697,7 +819,19 @@ const ProfileSetup = ({ editMode = false }) => {
       showSuccess(editMode ? 'Profile updated!' : 'Profile setup complete!');
       navigate('/');
     } catch (error) {
-      showError('Failed to save profile');
+      // Check if error is from backend validation
+      if (error.response?.data?.details) {
+        const details = error.response.data.details;
+        if (details.invalidConditions?.length) {
+          showError(`Unsupported conditions: ${details.invalidConditions.join(', ')}`);
+        } else if (details.invalidAllergies?.length) {
+          showError(`Unsupported allergies: ${details.invalidAllergies.join(', ')}`);
+        } else {
+          showError(error.response?.data?.error || 'Failed to save profile');
+        }
+      } else {
+        showError('Failed to save profile');
+      }
     }
   };
 
@@ -1106,18 +1240,23 @@ const ProfileSetup = ({ editMode = false }) => {
                             <button
                               key={condition}
                               type="button"
-                              onClick={() => handleHealthCondition(
-                                getSafeConditions().includes(condition) ? 'remove' : 'add',
-                                condition
-                              )}
-                              disabled={!isDecrypted} // Only disable when not decrypted
+                              onClick={() => {
+                                if (isDecrypted) {
+                                  handleHealthCondition(
+                                    getSafeConditions().includes(condition) ? 'remove' : 'add',
+                                    condition
+                                  );
+                                } else {
+                                  showError('Please create or enter health key first');
+                                }
+                              }}
                               className={`
                                 px-3 py-2 rounded-lg text-xs transition-colors text-left
                                 ${getSafeConditions().includes(condition)
                                   ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
                                   : 'bg-gray-900/50 text-gray-400 border border-gray-800 hover:border-gray-700'
                                 }
-                                ${(!isDecrypted) ? 'opacity-30 cursor-not-allowed' : ''}
+                                ${(!isDecrypted) ? 'opacity-30' : ''}
                               `}
                             >
                               <span className="truncate block">{condition}</span>
@@ -1127,38 +1266,101 @@ const ProfileSetup = ({ editMode = false }) => {
                       </div>
 
                       {/* Custom Condition Input */}
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Add custom condition..."
-                          disabled={!isDecrypted} // Only disable when not decrypted
-                          className={`flex-1 px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm ${
-                            (!isDecrypted) ? 'opacity-30 cursor-not-allowed' : ''
-                          }`}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && e.target.value.trim() && isDecrypted) {
-                              handleHealthCondition('add', e.target.value.trim());
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const input = document.querySelector('input[placeholder="Add custom condition..."]');
-                            if (input && input.value.trim() && isDecrypted) {
-                              handleHealthCondition('add', input.value.trim());
-                              input.value = '';
-                            }
-                          }}
-                          disabled={!isDecrypted}
-                          className={`px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors ${
-                            (!isDecrypted) ? 'opacity-30 cursor-not-allowed' : ''
-                          }`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                      <div className="relative">
+                        <div className="flex gap-2">
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              value={customConditionInput}
+                              onChange={(e) => {
+                                if (isDecrypted) {
+                                  handleConditionInputChange(e);
+                                }
+                              }}
+                              onFocus={() => {
+                                if (!isDecrypted) {
+                                  showError('Please create or enter health key first');
+                                }
+                              }}
+                              placeholder="Add custom condition..."
+                              className={`w-full px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm ${
+                                (!isDecrypted) ? 'opacity-30' : ''
+                              }`}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (isDecrypted) {
+                                    handleAddCustomCondition();
+                                  } else {
+                                    showError('Please create or enter health key first');
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isDecrypted) {
+                                handleAddCustomCondition();
+                              } else {
+                                showError('Please create or enter health key first');
+                              }
+                            }}
+                            className={`px-4 py-2.5 rounded-lg transition-colors ${
+                              isDecrypted && customConditionInput.trim()
+                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                                : 'opacity-30 bg-gray-800 text-gray-300'
+                            }`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {/* Show matching suggestions count */}
+                        {conditionSuggestions.length > 0 && customConditionInput && (
+                          <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto style={{ pointerEvents: 'auto' }}">
+                            {conditionSuggestions.map((suggestion, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                onClick={() => {
+                                  setCustomConditionInput(suggestion);
+                                  setConditionSuggestions([]);
+                                   document.querySelector('input[placeholder="Add custom condition..."]')?.focus();
+                                }}
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
+                      {/* Invalid Data Warning */}
+                      {invalidHealthData.hasInvalidData && (
+                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                            <div className="text-sm">
+                              <p className="text-red-400 font-medium mb-1">Invalid Health Data Detected</p>
+                              {invalidHealthData.conditions.length > 0 && (
+                                <p className="text-xs text-red-300">
+                                  Unsupported conditions: {invalidHealthData.conditions.join(', ')}
+                                </p>
+                              )}
+                              {invalidHealthData.allergies.length > 0 && (
+                                <p className="text-xs text-red-300 mt-1">
+                                  Unsupported allergies: {invalidHealthData.allergies.join(', ')}
+                                </p>
+                              )}
+                              <p className="text-xs text-red-400/80 mt-2">
+                                Please remove or correct these items before saving.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                     </div>
 
@@ -1194,18 +1396,23 @@ const ProfileSetup = ({ editMode = false }) => {
                             <button
                               key={allergy}
                               type="button"
-                              onClick={() => handleAllergy(
-                                getSafeAllergies().includes(allergy) ? 'remove' : 'add',
-                                allergy
-                              )}
-                              disabled={!isDecrypted} // Only disable when not decrypted
+                              onClick={() => {
+                                if (isDecrypted) {
+                                  handleAllergy(
+                                    getSafeAllergies().includes(allergy) ? 'remove' : 'add',
+                                    allergy
+                                  );
+                                } else {
+                                  showError('Please create or enter health key first');
+                                }
+                              }}
                               className={`
                                 px-3 py-2 rounded-lg text-xs transition-colors text-left
                                 ${getSafeAllergies().includes(allergy)
                                   ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                                   : 'bg-gray-900/50 text-gray-400 border border-gray-800 hover:border-gray-700'
                                 }
-                                ${(!isDecrypted) ? 'opacity-30 cursor-not-allowed' : ''}
+                                ${(!isDecrypted) ? 'opacity-30' : ''}
                               `}
                             >
                               <span className="truncate block">{allergy}</span>
@@ -1215,37 +1422,74 @@ const ProfileSetup = ({ editMode = false }) => {
                       </div>
 
                       {/* Custom Allergy Input */}
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Add custom allergy..."
-                          disabled={!isDecrypted} // Only disable when not decrypted
-                          className={`flex-1 px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm ${
-                            (!isDecrypted) ? 'opacity-30 cursor-not-allowed' : ''
-                          }`}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && e.target.value.trim() && isDecrypted) {
-                              handleAllergy('add', e.target.value.trim());
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const input = document.querySelector('input[placeholder="Add custom allergy..."]');
-                            if (input && input.value.trim() && isDecrypted) {
-                              handleAllergy('add', input.value.trim());
-                              input.value = '';
-                            }
-                          }}
-                          disabled={!isDecrypted}
-                          className={`px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors ${
-                            (!isDecrypted) ? 'opacity-30 cursor-not-allowed' : ''
-                          }`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                      <div className="relative">
+                        <div className="flex gap-2">
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              value={customAllergyInput}
+                              onChange={(e) => {
+                                if (isDecrypted) {
+                                  handleAllergyInputChange(e);
+                                }
+                              }}
+                              onFocus={() => {
+                                if (!isDecrypted) {
+                                  showError('Please create or enter health key first');
+                                }
+                              }}
+                              placeholder="Add custom allergy..."
+                              className={`w-full px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm ${
+                                (!isDecrypted) ? 'opacity-30' : ''
+                              }`}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (isDecrypted) {
+                                    handleAddCustomAllergy();
+                                  } else {
+                                    showError('Please create or enter health key first');
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isDecrypted) {
+                                handleAddCustomAllergy();
+                              } else {
+                                showError('Please create or enter health key first');
+                              }
+                            }}
+                            className={`px-4 py-2.5 rounded-lg transition-colors ${
+                              isDecrypted && customAllergyInput.trim()
+                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                                : 'opacity-30 bg-gray-800 text-gray-300'
+                            }`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {/* Suggestions dropdown */}
+                        {allergySuggestions.length > 0 && customAllergyInput && (
+                          <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {allergySuggestions.map((suggestion, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                onClick={() => {
+                                  setCustomAllergyInput(suggestion);
+                                  setAllergySuggestions([]);
+                                }}
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1281,11 +1525,11 @@ const ProfileSetup = ({ editMode = false }) => {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="flex-1 px-6 py-2.5 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20 text-sm disabled:opacity-50"
+                  disabled={isLoading || invalidHealthData.hasInvalidData}
+                  className="flex-1 px-6 py-2.5 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 justify-center">
                       <div className="w-4 h-4 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
                       {editMode ? 'Updating...' : 'Setting up...'}
                     </span>

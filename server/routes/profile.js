@@ -93,4 +93,5 @@ router.post('/calculate-bmi', requireAuth, (req, res) => {
   }
 });
 
+
 module.exports = router;

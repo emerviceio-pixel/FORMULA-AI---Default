@@ -264,12 +264,15 @@ const AdminDashboard = () => {
         format: exportFormat
       });
 
-      const data = await apiFetch(`/admin/feedback/export?${params}`, {
-        method: 'GET'
+      const baseUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${baseUrl}/admin/feedback/export?${params}`, {
+        method: 'GET',
+        credentials: 'include'
       });
 
-      if (!data.success) {
-        throw new Error(data.error || 'Export failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Export failed');
       }
 
       // Handle different formats
@@ -815,7 +818,7 @@ const AdminDashboard = () => {
                                 </label>
                                 <div className="grid grid-cols-3 gap-2">
                                   {[
-                                    { value: 'csv', label: 'CSV', icon: FileText, desc: 'Best for AI analysis' },
+                                    { value: 'csv', label: 'CSV', icon: FileText, desc: ' AI analysis' },
                                     { value: 'json', label: 'JSON', icon: FileJson, desc: 'Raw data' },
                                     { value: 'pdf', label: 'PDF', icon: Download, desc: 'Human readable' }
                                   ].map(option => (
