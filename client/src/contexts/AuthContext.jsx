@@ -12,7 +12,6 @@ export const useAuth = () => {
   return context;
 };
 
-
 const STORAGE_KEY = 'Fomula_auth';
 const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -21,7 +20,6 @@ const readCachedAuth = () => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    // Discard stale cache
     if (Date.now() - (parsed.timestamp || 0) > MAX_CACHE_AGE_MS) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
@@ -32,56 +30,57 @@ const readCachedAuth = () => {
   }
 };
 
-// ──────────────────────────────────────────────────────────────────────────────
-
 export const AuthProvider = ({ children }) => {
-  const cached = readCachedAuth(); // synchronous — runs before any render
+  const cached = readCachedAuth();
 
-  const [user, setUser]                     = useState(cached?.user          ?? null);
-  const [profile, setProfile]               = useState(cached?.profile        ?? null);
+  const [user, setUser] = useState(cached?.user ?? null);
+  const [profile, setProfile] = useState(cached?.profile ?? null);
   const [isAuthenticated, setIsAuthenticated] = useState(cached?.isAuthenticated ?? false);
   const [isAdmin, setIsAdmin] = useState(cached?.isAdmin ?? false);
-
-  // If we have a valid cache we can skip the loading spinner entirely.
-  // If there's no cache we must wait for initializeAuth() before routing.
-  const [isLoading, setIsLoading]           = useState(!cached);
+  const [isLoading, setIsLoading] = useState(!cached);
 
   const { showSuccess, showError } = useToast();
 
-  // ── Single auth initialization — verifies session with server ─────────────
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const session = await authService.checkSession();
+        
+        // Handle explicit session expiration
+        if (session.sessionExpired) {
+          localStorage.removeItem(STORAGE_KEY);
+          setUser(null);
+          setProfile(null);
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          setIsLoading(false);
+          return;
+        }
 
         if (session.success && session.userId) {
           setUser({ id: session.userId });
-          setIsAuthenticated(!!session.isAuthenticated);
+          setIsAuthenticated(true);
           
-          // Set admin status from session if available
           if (session.isAdmin !== undefined) {
             setIsAdmin(session.isAdmin);
           }
 
-          if (session.isAuthenticated) {
-            try {
-              const userProfile = await authService.getProfile();
-              if (userProfile.success) {
-                setProfile(userProfile.profile);
-                // Also check admin from profile
-                if (userProfile.profile?.isAdmin !== undefined) {
-                  setIsAdmin(userProfile.profile.isAdmin);
-                }
+          try {
+            const userProfile = await authService.getProfile();
+            if (userProfile.success) {
+              setProfile(userProfile.profile);
+              if (userProfile.profile?.isAdmin !== undefined) {
+                setIsAdmin(userProfile.profile.isAdmin);
               }
-            } catch {
-              // Profile may not exist yet — that's fine
             }
+          } catch {
+            // Profile may not exist yet
           }
         } else {
           setUser(null);
           setProfile(null);
           setIsAuthenticated(false);
-          setIsAdmin(false); // ← RESET ADMIN
+          setIsAdmin(false);
           localStorage.removeItem(STORAGE_KEY);
         }
       } catch (error) {
@@ -90,7 +89,7 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           setProfile(null);
           setIsAuthenticated(false);
-          setIsAdmin(false); // ← RESET ADMIN
+          setIsAdmin(false);
         }
       } finally {
         setIsLoading(false);
@@ -98,9 +97,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ── Persist auth state to localStorage on every change ────────────────────
   useEffect(() => {
     if (user || profile || isAuthenticated) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -115,27 +113,17 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, profile, isAuthenticated, isAdmin]);
 
-  // ── Auth actions ───────────────────────────────────────────────────────────
   const googleLogin = async (token) => {
-    const result = await authService.googleAuth(token);
-    if (result.success) {
-      setUser({ id: result.userId });
-      setIsAuthenticated(!result.isNewUser);
-      setIsAdmin(result.isAdmin === true);
-    }
-    return result;
-  };
-
-  const verifyPin = async (pin) => {
     try {
       setIsLoading(true);
-      const result = await authService.verifyPin(pin);
+      const result = await authService.googleAuth(token);
+      
       if (result.success) {
+        setUser({ id: result.userId });
         setIsAuthenticated(true);
-        // Also check if admin status comes from PIN verification
-        if (result.isAdmin !== undefined) {
-          setIsAdmin(result.isAdmin);
-        }
+        setIsAdmin(result.isAdmin === true);
+        
+        // Fetch profile data immediately
         try {
           const userProfile = await authService.getProfile();
           if (userProfile.success) {
@@ -144,56 +132,15 @@ export const AuthProvider = ({ children }) => {
               setIsAdmin(userProfile.profile.isAdmin);
             }
           }
-        } catch { /* silent */ }
+        } catch (profileError) {
+          console.error('Profile fetch error:', profileError);
+          // Don't block login if profile fetch fails
+        }
       }
+      
       return result;
     } catch (error) {
-      showError(error.message || 'Invalid PIN');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getPinAttemptStatus = async () => {
-    try {
-      return await authService.getPinAttemptStatus();
-    } catch (error) {
-      console.error('Failed to get PIN attempt status:', error);
-      return {
-        success: false,
-        attempts: 0,
-        locked: false,
-        remainingTime: 0
-      };
-    }
-  };
-  const setupPin = async (pin, recoveryWord) => {
-    try {
-      setIsLoading(true);
-      const result = await authService.setupPin(pin, recoveryWord);
-      if (result.success) {
-        setUser({ id: result.userId });
-        setIsAuthenticated(true);
-        showSuccess('PIN Created!');
-      }
-      return result;
-    } catch (error) {
-      showError(error.message || 'Failed to setup PIN');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetPin = async (recoveryWord, newPin) => {
-    try {
-      setIsLoading(true);
-      const result = await authService.resetPin(recoveryWord, newPin);
-      if (result.success) showSuccess('PIN reset successful!');
-      return result;
-    } catch (error) {
-      showError(error.message || 'Failed to reset PIN');
+      console.error('Google login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -239,7 +186,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setProfile(null);
         setIsAuthenticated(false);
-        setIsAdmin(false)
+        setIsAdmin(false);
       }
     } catch (error) {
       showError(error.message || 'Failed to logout');
@@ -253,12 +200,8 @@ export const AuthProvider = ({ children }) => {
     profile,
     isLoading,
     isAuthenticated,
-     isAdmin,
+    isAdmin,
     googleLogin,
-    setupPin,
-    verifyPin,
-    getPinAttemptStatus,
-    resetPin,
     updateProfile,
     updateSettings,
     logout,

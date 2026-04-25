@@ -11,7 +11,7 @@ import SuggestionsDropdown from '../../components/SuggestionsDropdown';
 
 import {
   CheckCircle, AlertTriangle, XCircle,
-  X,  RefreshCw, ThumbsUp, ThumbsDown,
+  X, RefreshCw, ThumbsUp, ThumbsDown,
   Sparkles, ArrowRight
 } from 'lucide-react';
 
@@ -41,6 +41,11 @@ const Dashboard = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [inputFocused, setInputFocused] = useState(false);
   
+  // Layout transition state
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const isProgrammaticChange = useRef(false);
+  const hasAnimatedScroll = useRef(false);
+  
   // Feedback states - Clean version
   const [userFeedback, setUserFeedback] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +68,7 @@ const Dashboard = () => {
   // Refs
   const suggestionsContainerRef = useRef(null);
   const searchInputRef = useRef(null);
+  const heroContainerRef = useRef(null);
   
   /* ── framer-motion value for sheet drag ── */
   const sheetY = useMotionValue(0);
@@ -76,9 +82,37 @@ const Dashboard = () => {
   const { formattedTime: countdownTime } = useCountdown(
     resetTimestamp,
     () => {
-      refreshScanStatus();
+      fetchScanStatus();
     }
   );
+
+  // Track search active state
+  useEffect(() => {
+    const hasContent = searchQuery.trim().length > 0;
+    setIsSearchActive(hasContent);
+    
+    // Handle auto-scroll on mobile when user types (not programmatic)
+    if (hasContent && !isProgrammaticChange.current && isMobile && window.innerHeight < 700) {
+      // Prevent multiple scroll animations
+      if (!hasAnimatedScroll.current) {
+        hasAnimatedScroll.current = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Reset scroll flag after animation completes
+        setTimeout(() => {
+          hasAnimatedScroll.current = false;
+        }, 800);
+      }
+    }
+    
+    // Reset programmatic change flag
+    if (isProgrammaticChange.current) {
+      const timer = setTimeout(() => {
+        isProgrammaticChange.current = false;
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, isMobile]);
 
   // Fetch existing feedback when modal opens
   useEffect(() => {
@@ -90,7 +124,7 @@ const Dashboard = () => {
   const fetchExistingFeedback = async (scanId) => {
     try {
       setIsLoadingFeedback(true);
-      const dataponse = await apiFetch(`/feedback/status/${scanId}`);
+      const data = await apiFetch(`/feedback/status/${scanId}`);
       
       if (data.success && data.hasFeedback) {
         setUserFeedback(data.feedbackType);
@@ -107,24 +141,23 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Fetch scan status (consolidated function)
+  const fetchScanStatus = async () => {
+    try {
+      const data = await apiFetch('/scans/status/me');
+      if (data.success) {
+        setLocalScanStatus(data.scanStatus);
+        setResetTimestamp(data.scanStatus.resetTimestamp);
+        return data.scanStatus;
+      }
+    } catch (error) {
+    }
+    return null;
+  };
+
   // Fetch initial scan status on component mount
   useEffect(() => {
-    const fetchInitialScanStatus = async () => {
-      try {
-        const data = await apiFetch('/scans/status/me');
-
-          
-
-          if (data.success) {
-            setLocalScanStatus(data.scanStatus);
-            setResetTimestamp(data.scanStatus.resetTimestamp);
-          }
-        
-      } catch (error) {
-      }
-    };
-    
-    fetchInitialScanStatus();
+    fetchScanStatus();
   }, []);
 
   useEffect(() => {
@@ -146,30 +179,22 @@ const Dashboard = () => {
     if (displayScanStatus?.limitReached && resetTimestamp) {
       const timeUntilReset = resetTimestamp - Date.now();
       if (timeUntilReset <= 0) {
-        refreshScanStatus();
+        fetchScanStatus();
       }
     }
   }, [resetTimestamp, displayScanStatus?.limitReached]);
 
-  const refreshScanStatus = async () => {
-    try {
-      const data = await apiFetch('/scans/status/me');      
-        
-        if (data.success) {
-          setLocalScanStatus(data.scanStatus);
-          setResetTimestamp(data.scanStatus.resetTimestamp);
-          return data.scanStatus;
-        }
 
-    } catch (error) {
-    }
-    return null;
-  };
 
-  const handleAnalyzeWithQuery = async (query, e) => {
+  const handleAnalyzeWithQuery = async (query, e, isFromSuggestion = false) => {
     e.preventDefault();
     
     if (!query.trim() || authLoading) return;
+    
+    // Mark as programmatic change if from suggestion
+    if (isFromSuggestion) {
+      isProgrammaticChange.current = true;
+    }
     
     setIsLoading(true);
     
@@ -287,7 +312,7 @@ const Dashboard = () => {
 
   const handleAnalyze = async (e) => {
     e.preventDefault();
-    handleAnalyzeWithQuery(searchQuery, e);
+    handleAnalyzeWithQuery(searchQuery, e, false);
   };
 
   const handleRegenerate = async () => {
@@ -318,7 +343,7 @@ const Dashboard = () => {
 
       
       if (data.success) {
-        setResult({ ...data.scan, inputType: data.scan.inputType });
+       setResult({ ...data.scan, inputType: result.inputType });
         showSuccess('New recommendation generated!');
         
         if (data.remaining <= 2 && data.remaining > 0) {
@@ -364,7 +389,7 @@ const Dashboard = () => {
       
       if ( data.success) {
         setUserFeedback(feedbackType);
-        showSuccess(feedbackType === 'good' ? 'Thanks for your feedback!' : 'Feedback recorded');
+        showSuccess(feedbackType === 'good' ? 'Thanks!' : 'Feedback recorded');
       } else {
         if (data.alreadyExists) {
           showError('You have already submitted feedback for this recommendation');
@@ -465,7 +490,7 @@ const Dashboard = () => {
       setShowSuggestions(false);
       setTimeout(() => {
         const fakeEvent = { preventDefault: () => {} };
-        handleAnalyzeWithQuery(selectedSuggestion, fakeEvent);
+        handleAnalyzeWithQuery(selectedSuggestion, fakeEvent, true);
       }, 50);
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
@@ -473,6 +498,9 @@ const Dashboard = () => {
   };
 
   const handleSuggestionSelect = (suggestion) => {
+    // Mark as programmatic change
+    isProgrammaticChange.current = true;
+    
     setSearchQuery(suggestion);
     setShowSuggestions(false);
     
@@ -544,6 +572,54 @@ const Dashboard = () => {
 
   const resetDisplay = countdownTime || displayScanStatus?.resetIn;
 
+  // Animation variants for the hero section
+  const heroVariants = {
+    idle: {
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.6,
+        ease: [0.16, 1, 0.3, 1]
+      }
+    },
+    active: {
+      y: isMobile ? -60 : -20,  // Desktop: only -20px, not -100px
+      scale: isMobile ? 0.94 : 0.98,  // Desktop: subtle 0.98 scale
+      transition: {
+        duration: 0.6,
+        ease: [0.16, 1, 0.3, 1]
+      }
+    }
+  };
+
+  // Heading variants for text size adjustment
+  const headingVariants = {
+    idle: {
+      scale: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    },
+    active: {
+      scale: isMobile ? 0.85 : 0.95,  // Desktop: less aggressive scale
+      y: isMobile ? -8 : 0,  // Desktop: no Y movement on heading
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
+  // Chips section variants
+  const chipsVariants = {
+    idle: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    },
+    active: {
+      opacity: isMobile ? 0.5 : 0.8,  // Desktop: 0.8 opacity (more visible)
+      y: isMobile ? -4 : 0,  // Desktop: no Y movement
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
   if (authLoading) return (
     <div className="min-h-screen bg-[#080808] flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
@@ -555,317 +631,296 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Serif+Display:ital@0;1&display=swap');
-        #grain { position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:0.03;
-          background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-        .serif { font-family: 'DM Serif Display', Georgia, serif; }
-        .search-ring { transition: box-shadow .3s ease; }
-        .search-ring.on { box-shadow: 0 0 0 1px rgba(99,102,241,.4), 0 4px 60px rgba(99,102,241,.12); }
-        .chip { transition: background .15s, color .15s, border-color .15s; }
-        .chip:hover:not(:disabled) { background: rgba(99,102,241,.12); color:#a5b4fc; border-color: rgba(99,102,241,.25); }
-        .scan-row { transition: background .12s; }
-        .scan-row:hover { background: rgba(255,255,255,.025); }
-        .scan-row:hover .scan-name { color:#fff; }
-        .h-scroll::-webkit-scrollbar { height:3px; }
-        .h-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.05); border-radius:99px; }
-        .h-scroll { scrollbar-width:thin; scrollbar-color: rgba(255,255,255,.05) transparent; }
-        ::-webkit-scrollbar { width:4px; }
-        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.06); border-radius:99px; }
-      `}</style>
-
-      <div id="grain" />
-      <div className="fixed inset-0 pointer-events-none" style={{
-        backgroundImage:'linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)',
-        backgroundSize:'48px 48px',
-      }} />
-
-      <motion.div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] pointer-events-none"
-        animate={{ opacity: inputFocused ? 1 : 0.35 }}
-        transition={{ duration: 0.55 }}
-        style={{ background:'radial-gradient(ellipse at 50% 0%,rgba(99,102,241,.13) 0%,transparent 70%)' }}
-      />
-
       <div className="relative min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col">
           <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-6 sm:pb-8 lg:pb-12">
             
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [.16, 1, .3, 1] }}
-            className="mb-6 sm:mb-8 lg:mb-12"
-          >
-            <h1 className="serif text-2xl sm:text-3xl pt-7 md:text-4xl lg:text-5xl xl:text-6xl leading-tight text-center mb-2">
-              <span className="text-gradient-main">
-                What are you eating{" "}
-              </span>
-              <span className="text-gradient-accent italic">
-                today?
-              </span>
-            </h1>
-          </motion.div>
-
-            <div className="w-full max-w-3xl mx-auto mb-8 lg:mb-12">
+            {/* Hero Section with Animation */}
+            <motion.div
+              ref={heroContainerRef}
+              variants={heroVariants}
+              animate={isSearchActive ? "active" : "idle"}
+              className="w-full"
+              style={{ originY: 0.5 }}
+            >
               <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                variants={headingVariants}
+                animate={isSearchActive ? "active" : "idle"}
+                className="mb-6 sm:mb-8 lg:mb-12"
               >
-                <div className="relative" ref={suggestionsContainerRef}>
-                  <form 
-                    onSubmit={(e) => {
-                      setShowSuggestions(false);
-                      handleAnalyze(e);
-                    }}
-                  >
-                    <div className="relative group">
-                      <div className={`absolute -inset-[1px] rounded-xl sm:rounded-2xl transition-opacity duration-500 pointer-events-none ${
-                        inputFocused ? 'opacity-100' : 'opacity-0'
-                      }`} style={{
-                        background: 'radial-gradient(ellipse at 50% 50%, rgba(99,102,241,.12), transparent 70%)'
-                      }} />
-                      
-                      <div className={`relative rounded-xl sm:rounded-2xl bg-[#0c0c0c] border transition-all duration-300 ${
-                        inputFocused 
-                          ? 'border-indigo-500/30 shadow-[0_0_0_1px_rgba(99,102,241,0.15),0_8px_40px_rgba(0,0,0,0.4)]' 
-                          : 'border-white/[0.1] group-hover:border-white/[0.1] shadow-lg'
-                      }`}>
+                <h1 className="serif text-2xl sm:text-3xl pt-7 md:text-4xl lg:text-5xl xl:text-6xl leading-tight text-center mb-2">
+                  <span className="text-gradient-main">
+                    What's on your menu{" "}
+                  </span>
+                  <span className="text-gradient-accent italic">
+                    today?
+                  </span>
+                </h1>
+              </motion.div>
+
+              <div className="w-full max-w-3xl mx-auto mb-8 lg:mb-12">
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <div className="relative" ref={suggestionsContainerRef}>
+                    <form 
+                      onSubmit={(e) => {
+                        setShowSuggestions(false);
+                        handleAnalyze(e);
+                      }}
+                    >
+                      <div className="relative group">
+                        <div className={`absolute -inset-[1px] rounded-full transition-opacity duration-500 pointer-events-none ${
+                          inputFocused ? 'opacity-100' : 'opacity-0'
+                        }`} style={{
+                          background: 'radial-gradient(ellipse at 50% 50%, rgba(99,102,241,.12), transparent 70%)'
+                        }} />
                         
-                        <AnimatePresence>
-                          {isLoading && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              className="absolute inset-0 bg-[#0a0a0a]/85 backdrop-blur-sm rounded-xl sm:rounded-2xl z-20 flex items-center justify-center"
-                            >
-                              <div className="flex items-center gap-3">
-                                
-                                {/* Calm Thinking Dots */}
-                                <div className="flex items-center gap-1.5">
-                                  {[0, 1, 2].map((i) => (
-                                    <motion.div
-                                      key={i}
-                                      className="w-1.5 h-1.5 rounded-full bg-indigo-400/70"
-                                      animate={{
-                                        opacity: [0.3, 1, 0.3],
-                                        scale: [0.9, 1.15, 0.9],
-                                      }}
-                                      transition={{
-                                        duration: 1.6,
-                                        repeat: Infinity,
-                                        ease: "easeInOut",
-                                        delay: i * 0.25,
-                                      }}
-                                    />
-                                  ))}
+                        <div className={`relative rounded-full bg-[#0c0c0c] border transition-all duration-300 ${
+                          inputFocused 
+                            ? 'border-indigo-500/30 shadow-[0_0_0_1px_rgba(99,102,241,0.15),0_8px_40px_rgba(0,0,0,0.4)]' 
+                            : 'border-white/[0.1] group-hover:border-white/[0.1] shadow-lg'
+                        }`}>
+                          
+                          <AnimatePresence>
+                            {isLoading && (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-[#0a0a0a]/85 backdrop-blur-sm rounded-full z-20 flex items-center justify-center"
+                              >
+                                <div className="flex items-center gap-3">
+                                  
+                                  {/* Calm Thinking Dots */}
+                                  <div className="flex items-center gap-1.5">
+                                    {[0, 1, 2].map((i) => (
+                                      <motion.div
+                                        key={i}
+                                        className="w-1.5 h-1.5 rounded-full bg-indigo-400/70"
+                                        animate={{
+                                          opacity: [0.3, 1, 0.3],
+                                          scale: [0.9, 1.15, 0.9],
+                                        }}
+                                        transition={{
+                                          duration: 1.6,
+                                          repeat: Infinity,
+                                          ease: "easeInOut",
+                                          delay: i * 0.25,
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+
+                                  {/* Text */}
+                                  <motion.span
+                                    className="text-xs text-gray-400 tracking-wide font-medium"
+                                    animate={{ opacity: [0.6, 1, 0.6] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                  >
+                                    Analyzing…
+                                  </motion.span>
+
                                 </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
 
-                                {/* Text */}
-                                <motion.span
-                                  className="text-xs text-gray-400 tracking-wide font-medium"
-                                  animate={{ opacity: [0.6, 1, 0.6] }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                >
-                                  Analyzing…
-                                </motion.span>
-
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        <div className="flex items-center gap-1">
-                          <motion.div 
-                            className="pl-4 sm:pl-5 pointer-events-none"
-                            animate={inputFocused ? { scale: 1.05, x: -1 } : { scale: 1, x: 0 }}
-                            transition={{ duration: 0.25, ease: "easeOut" }}
-                          >
-                            <svg 
-                              className={`w-4 h-4 transition-all duration-300 ease-out ${
-                                inputFocused 
-                                  ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]' 
-                                  : searchQuery.trim()
-                                    ? 'text-gray-400 group-hover:text-indigo-400/50'
-                                    : 'text-gray-600 group-hover:text-gray-400'
-                              }`} 
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24" 
-                              strokeWidth={1.8}
+                          <div className="flex items-center gap-1">
+                            <motion.div 
+                              className="pl-4 sm:pl-5 pointer-events-none"
+                              animate={inputFocused ? { scale: 1.05, x: -1 } : { scale: 1, x: 0 }}
+                              transition={{ duration: 0.25, ease: "easeOut" }}
                             >
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                          </motion.div>
-                          
-                          <input
-                            ref={searchInputRef}
-                            type="text"
-                            value={searchQuery}
-                            onChange={handleSearchChange}
-                            onKeyDown={handleKeyDown}
-                            onFocus={() => setInputFocused(true)}
-                            onBlur={() => setInputFocused(false)}
-                            placeholder="Any meal, drink, restaurant, or special keys…"
-                            disabled={inputDisabled}
-                            autoFocus
-                            className="flex-1 bg-transparent px-2 py-3 sm:py-4 text-[15px] text-white placeholder:text-gray-600 focus:outline-none disabled:opacity-40 font-normal tracking-wide"
-                          />
-                          
-                          {/* Enhanced submit button with better transition */}
-                          <motion.button
-                            type="submit"
-                            disabled={inputDisabled || !searchQuery.trim()}
-                            whileHover={!inputDisabled && searchQuery.trim() ? { scale: 1.02 } : {}}
-                            whileTap={!inputDisabled && searchQuery.trim() ? { scale: 0.98 } : {}}
-                            className={`relative m-1.5 sm:m-2 flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
-                              !inputDisabled && searchQuery.trim()
-                                ? 'bg-indigo-500/40 hover:bg-indigo-500 shadow-sm hover:shadow-indigo-500/15 cursor-pointer'
-                                : 'bg-white/5 cursor-not-allowed'
-                            }`}
-                          >
-                            <ArrowRight className={`w-4 h-4 transition-all duration-200 ${
-                              !inputDisabled && searchQuery.trim() 
-                                ? 'text-white group-hover/btn:translate-x-0.5' 
-                                : 'text-gray-600'
-                            }`} />
-                          </motion.button>
-                        </div>
-
-                        {displayScanStatus && (!displayScanStatus.isPremium || displayScanStatus.scanLimit !== 'Unlimited') && (
-                          <div className="absolute -bottom-[1px] left-4 sm:left-5 right-4 sm:right-5">
-                            <motion.div
-                              className={`h-[2px] rounded-full ${scanBarColor}`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${Math.min(scanLimitPercent, 100)}%` }}
-                              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                              <svg 
+                                className={`w-4 h-4 transition-all duration-300 ease-out ${
+                                  inputFocused 
+                                    ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]' 
+                                    : searchQuery.trim()
+                                      ? 'text-gray-400 group-hover:text-indigo-400/50'
+                                      : 'text-gray-600 group-hover:text-gray-400'
+                                }`} 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24" 
+                                strokeWidth={1.8}
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                            </motion.div>
+                            
+                            <input
+                              ref={searchInputRef}
+                              type="text"
+                              value={searchQuery}
+                              onChange={handleSearchChange}
+                              onKeyDown={handleKeyDown}
+                              onFocus={() => setInputFocused(true)}
+                              onBlur={() => setInputFocused(false)}
+                              placeholder="Any meal, drink, restaurant, or special keys…"
+                              disabled={inputDisabled}
+                              autoFocus
+                              className="flex-1 bg-transparent px-2 py-3 sm:py-4 text-[15px] text-white placeholder:text-gray-600 focus:outline-none disabled:opacity-40 font-normal tracking-wide"
                             />
+                            
+                            {/* Enhanced submit button with better transition */}
+                            <motion.button
+                              type="submit"
+                              disabled={inputDisabled || !searchQuery.trim()}
+                              whileHover={!inputDisabled && searchQuery.trim() ? { scale: 1.02 } : {}}
+                              whileTap={!inputDisabled && searchQuery.trim() ? { scale: 0.98 } : {}}
+                              className={`relative m-1.5 sm:m-2 flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                                !inputDisabled && searchQuery.trim()
+                                  ? 'bg-indigo-500/40 hover:bg-indigo-500 shadow-sm hover:shadow-indigo-500/15 cursor-pointer'
+                                  : 'bg-white/5 cursor-not-allowed'
+                              }`}
+                            >
+                              <ArrowRight className={`w-4 h-4 transition-all duration-200 ${
+                                !inputDisabled && searchQuery.trim() 
+                                  ? 'text-white group-hover/btn:translate-x-0.5' 
+                                  : 'text-gray-600'
+                              }`} />
+                            </motion.button>
                           </div>
-                        )}
+
+                          {displayScanStatus && (!displayScanStatus.isPremium || displayScanStatus.scanLimit !== 'Unlimited') && (
+                            <div className="absolute -bottom-[1px] left-4 sm:left-5 right-4 sm:right-5">
+                              <motion.div
+                                className={`h-[2px] rounded-full ${scanBarColor}`}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(scanLimitPercent, 100)}%` }}
+                                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </form>
+                    </form>
 
-                  <SuggestionsDropdown
-                    suggestions={suggestions}
-                    showSuggestions={showSuggestions}
-                    selectedIndex={selectedSuggestionIndex}
-                    onSelect={handleSuggestionSelect}
-                    onClose={() => setShowSuggestions(false)}
-                    inputRef={searchInputRef}
-                  />
+                    <SuggestionsDropdown
+                      suggestions={suggestions}
+                      showSuggestions={showSuggestions}
+                      selectedIndex={selectedSuggestionIndex}
+                      onSelect={handleSuggestionSelect}
+                      onClose={() => setShowSuggestions(false)}
+                      inputRef={searchInputRef}
+                    />
 
-                  {suggestedCorrection && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-2.5 flex items-center gap-2 px-1"
-                    >
-                      <span className="text-[11px] text-gray-600 font-medium tracking-wide">Did you mean:</span>
-                      <button
-                        onClick={() => {
-                          const correction = suggestedCorrection;
-                          setSearchQuery(correction);
-                          setSuggestedCorrection('');
-                          setShowSuggestions(false);
-                          setTimeout(() => {
-                            const fakeEvent = { preventDefault: () => {} };
-                            handleAnalyzeWithQuery(correction, fakeEvent);
-                          }, 50);
-                        }}
-                        className="group px-3 py-1 bg-indigo-500/8 hover:bg-indigo-500/12 text-indigo-400 rounded-lg text-[11px] font-medium border border-indigo-500/15 hover:border-indigo-500/25 transition-all duration-200 flex items-center gap-1.5"
+                    {suggestedCorrection && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-2.5 flex items-center gap-2 px-1"
                       >
-                        <Sparkles className="w-3 h-3 opacity-80 group-hover:opacity-100 transition-opacity" />
-                        {suggestedCorrection}
-                      </button>
-                    </motion.div>
-                  )}
+                        <span className="text-[11px] text-gray-600 font-medium tracking-wide">Did you mean:</span>
+                        <button
+                          onClick={() => {
+                            isProgrammaticChange.current = true;
+                            const correction = suggestedCorrection;
+                            setSearchQuery(correction);
+                            setSuggestedCorrection('');
+                            setShowSuggestions(false);
+                            setTimeout(() => {
+                              const fakeEvent = { preventDefault: () => {} };
+                              handleAnalyzeWithQuery(correction, fakeEvent, true);
+                            }, 50);
+                          }}
+                          className="group px-3 py-1 bg-indigo-500/8 hover:bg-indigo-500/12 text-indigo-400 rounded-lg text-[11px] font-medium border border-indigo-500/15 hover:border-indigo-500/25 transition-all duration-200 flex items-center gap-1.5"
+                        >
+                          <Sparkles className="w-3 h-3 opacity-80 group-hover:opacity-100 transition-opacity" />
+                          {suggestedCorrection}
+                        </button>
+                      </motion.div>
+                    )}
 
-                  {displayScanStatus && (
-                    <motion.div 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
-                      className="flex items-center justify-between mt-2.5 px-1"
-                    >
-                      <div className="flex items-center gap-3">
-                        {!displayScanStatus.isPremium ? (
-                          displayScanStatus.limitReached ? (
-                            <span className="text-[11px] text-rose-400/80 font-medium flex items-center gap-1.5">
-                              <span className="w-1 h-1 rounded-full bg-rose-400/60 animate-pulse" />
-                              Limit reached · Resets in{' '}
-                              <span className={`font-mono ${!resetDisplay?.includes('s') ? 'flash-digits' : ''}`}>
-                                {resetDisplay || 'a few hours'}
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-gray-600 font-mono">
-                              {displayScanStatus.scansUsed || 0}/{displayScanStatus.scanLimit} scans
-                              {displayScanStatus.remaining <= 3 && displayScanStatus.remaining > 0 && (
-                                <span className="text-amber-500/80 ml-1.5 animate-pulse">· {displayScanStatus.remaining} left</span>
-                              )}
-                            </span>
-                          )
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-indigo-400/70 font-medium tracking-wide">
-                              ✦ Premium
-                              {displayScanStatus.scanLimit === 'Unlimited' 
-                                ? ' · Unlimited' 
-                                : ` · ${displayScanStatus.scansUsed}/${displayScanStatus.scanLimit}`}
-                            </span>
-                            {displayScanStatus.limitReached && (
-                              <span className="text-[11px] text-amber-500/70">
-                                · Resets in{' '}
+                    {displayScanStatus && (
+                      <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        className="flex items-center justify-between mt-2.5 px-1"
+                      >
+                        <div className="flex items-center gap-3">
+                          {!displayScanStatus.isPremium ? (
+                            displayScanStatus.limitReached ? (
+                              <span className="text-[11px] text-rose-400/80 font-medium flex items-center gap-1.5">
+                                <span className="w-1 h-1 rounded-full bg-rose-400/60 animate-pulse" />
+                                Limit reached · Resets in{' '}
                                 <span className={`font-mono ${!resetDisplay?.includes('s') ? 'flash-digits' : ''}`}>
                                   {resetDisplay || 'a few hours'}
                                 </span>
                               </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] text-gray-700 font-mono tracking-wide">⌘⏎</span>
-                        <span className="text-[10px] text-gray-700">to analyze</span>
-                      </div>
-                    </motion.div>
-                  )}
+                            ) : (
+                              <span className="text-[11px] text-gray-600 font-mono">
+                                {displayScanStatus.scansUsed || 0}/{displayScanStatus.scanLimit} scans
+                                {displayScanStatus.remaining <= 3 && displayScanStatus.remaining > 0 && (
+                                  <span className="text-amber-500/80 ml-1.5 animate-pulse">· {displayScanStatus.remaining} left</span>
+                                )}
+                              </span>
+                            )
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-indigo-400/70 font-medium tracking-wide">
+                                ✦ Premium
+                                {displayScanStatus.scanLimit === 'Unlimited' 
+                                  ? ' · Unlimited' 
+                                  : ` · ${displayScanStatus.scansUsed}/${displayScanStatus.scanLimit}`}
+                              </span>
+                              {displayScanStatus.limitReached && (
+                                <span className="text-[11px] text-amber-500/70">
+                                  · Resets in{' '}
+                                  <span className={`font-mono ${!resetDisplay?.includes('s') ? 'flash-digits' : ''}`}>
+                                    {resetDisplay || 'a few hours'}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+                          <span className="text-[10px] text-gray-700 font-mono tracking-wide">⌘⏎</span>
+                          <span className="text-[10px] text-gray-700">to analyze</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Special Keys Section with Animation */}
+              <motion.div
+                variants={chipsVariants}
+                animate={isSearchActive ? "active" : "idle"}
+                className="mb-6 sm:mb-8 w-full"
+              >
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Special Keys</span>
+                </div>
+                <div className="relative w-full">
+                  <div className="flex gap-2 overflow-x-auto pb-2 px-4 sm:px-6 md:justify-center md:overflow-x-visible md:flex-wrap" 
+                      style={{ 
+                        WebkitOverflowScrolling: 'none',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'auto'
+                      }}>
+                    {['Breakfast','Lunch','Dinner','Snack','Fruit'].map(item => (
+                      <button
+                        key={item}
+                        onClick={() => {
+                          isProgrammaticChange.current = true;
+                          setSearchQuery(item);
+                        }}
+                        disabled={inputDisabled}
+                        className="chip flex-shrink-0 md:flex-shrink px-3.5 py-1.5 bg-white/[0.04] border border-white/[0.1] rounded-full text-[12px] text-gray-500 disabled:opacity-20 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
-            </div>
-
-            <motion.div
-              initial={{ opacity:0, y:12 }}
-              animate={{ opacity:1, y:0 }}
-              transition={{ delay:.14, duration:.5, ease:[.16,1,.3,1] }}
-              className="mb-6 sm:mb-8 w-full"
-            >
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">Special Keys</span>
-              </div>
-              <div className="relative w-full">
-                <div className="flex gap-2 overflow-x-auto pb-2 px-4 sm:px-6 md:justify-center md:overflow-x-visible md:flex-wrap" 
-                    style={{ 
-                      WebkitOverflowScrolling: 'none',
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'auto'
-                    }}>
-                  {['Breakfast','Lunch','Dinner','Snack','Fruit'].map(item => (
-                    <button
-                      key={item}
-                      onClick={() => setSearchQuery(item)}
-                      disabled={inputDisabled}
-                      className="chip flex-shrink-0 md:flex-shrink px-3.5 py-1.5 bg-white/[0.04] border border-white/[0.1] rounded-full text-[12px] text-gray-500 disabled:opacity-20 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </motion.div>
 
             <p className="text-center text-[9px] sm:text-[10px] text-gray-800 mt-4 sm:mt-6">
@@ -977,6 +1032,7 @@ const Dashboard = () => {
         error={validationError?.message}
         suggestion={validationError?.suggestion}
         onUseSuggestion={() => {
+          isProgrammaticChange.current = true;
           setSearchQuery(validationError.suggestion);
           setShowValidationModal(false);
           setValidationError(null);

@@ -1,8 +1,9 @@
-// server/routes/profile.js
+// REPLACE THE ENTIRE FILE WITH:
+
 const express = require('express');
 const router = express.Router();
 const profileController = require('../controllers/profileController');
-const { requireAuth, requirePinVerification } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/auth');
 
 // Get user profile (masked basic info)
 router.get('/', requireAuth, profileController.getProfile);
@@ -10,11 +11,11 @@ router.get('/', requireAuth, profileController.getProfile);
 // Update full profile (including optional health data with key)
 router.put('/', requireAuth, profileController.updateProfile);
 
-// Get decrypted health conditions — requires PIN verification
-router.get('/health-conditions', requireAuth, requirePinVerification, profileController.getHealthConditions);
+// Get decrypted health conditions — NO PIN REQUIRED
+router.get('/health-conditions', requireAuth, profileController.getHealthConditions);
 
-// Get decrypted allergies — requires PIN verification
-router.get('/allergies', requireAuth, requirePinVerification, profileController.getAllergies);
+// Get decrypted allergies — NO PIN REQUIRED
+router.get('/allergies', requireAuth, profileController.getAllergies);
 
 // Get predefined examples (for UI suggestions)
 router.get('/examples', requireAuth, profileController.getPredefinedExamples);
@@ -33,25 +34,21 @@ router.post('/calculate-bmi', requireAuth, (req, res) => {
 
     let heightInMeters, weightInKg;
     
-    // Convert to metric if needed
     if (height.unit === 'cm') {
       heightInMeters = height.value / 100;
     } else {
-      // Assume feet if not cm
       heightInMeters = height.value * 0.3048;
     }
     
     if (weight.unit === 'kg') {
       weightInKg = weight.value;
     } else {
-      // Assume pounds if not kg
       weightInKg = weight.value * 0.453592;
     }
     
     const bmi = weightInKg / (heightInMeters * heightInMeters);
     const roundedBMI = parseFloat(bmi.toFixed(1));
     
-    // Determine BMI category
     let bmiCategory;
     if (bmi < 18.5) {
       bmiCategory = 'underweight';
@@ -63,7 +60,6 @@ router.post('/calculate-bmi', requireAuth, (req, res) => {
       bmiCategory = 'obese';
     }
     
-    // Interpretation helper
     const getBMIInterpretation = (category) => {
       switch (category) {
         case 'underweight':
@@ -92,6 +88,5 @@ router.post('/calculate-bmi', requireAuth, (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

@@ -1,6 +1,7 @@
+// server/controllers/profileController.js
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 const { validateHealthData } = require('../shared/constants');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 const profileController = {
   // Get user profile (masked)
@@ -14,7 +15,7 @@ const profileController = {
         });
       }
 
-      const user = await User.findById(userId).select('-pinHash -pinSalt -recoveryWordHash -recoveryWordSalt');
+      const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -22,12 +23,13 @@ const profileController = {
         });
       }
 
-      // Return masked profile
+      // Return masked profile (health data hidden until decrypted)
       const maskedProfile = {
         ...user.toObject(),
         healthConditions: [],
         allergies: [],
-        hasHealthKey: user.hasHealthKey || false
+        hasHealthKey: false, // No longer used
+        migratedToSystemKey: user.migratedToSystemKey || false
       };
 
       res.json({
@@ -35,6 +37,7 @@ const profileController = {
         profile: maskedProfile
       });
     } catch (error) {
+      console.error('Get profile error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get profile'
@@ -43,7 +46,7 @@ const profileController = {
   },
 
   // Update profile
-    async updateProfile(req, res) {
+  async updateProfile(req, res) {
     try {
       const userId = req.session.userId;
       const updates = req.body;
@@ -91,10 +94,10 @@ const profileController = {
         }
       }
 
-      // Basic info (unchanged)
-      if (updates.nickname) user.nickname = updates.nickname;
-      if (updates.dateOfBirth) user.dateOfBirth = updates.dateOfBirth;
-      if (updates.country) user.country = updates.country;
+      // Basic info
+      if (updates.nickname !== undefined) user.nickname = updates.nickname;
+      if (updates.dateOfBirth !== undefined) user.dateOfBirth = updates.dateOfBirth;
+      if (updates.country !== undefined) user.country = updates.country;
 
       if (updates.height) {
         user.height = updates.height;
@@ -106,46 +109,43 @@ const profileController = {
         user.calculateBMI();
       }
 
-      if (updates.dietaryGoal) user.dietaryGoal = updates.dietaryGoal;
-      if (updates.activityLevel) user.activityLevel = updates.activityLevel;
+      if (updates.dietaryGoal !== undefined) user.dietaryGoal = updates.dietaryGoal;
+      if (updates.activityLevel !== undefined) user.activityLevel = updates.activityLevel;
 
-      // Health key setup (first-time)
-      if (updates.healthDataKey && !user.healthKeyHash) {
-        const hash = await bcrypt.hash(updates.healthDataKey, 10);
-        user.healthKeyHash = hash;
-        user.hasHealthKey = true;
+      // Encrypt health conditions with system key
+      if (updates.healthConditions !== undefined) {
+        if (Array.isArray(updates.healthConditions) && updates.healthConditions.length > 0) {
+          // Encrypt for user profile (using system key)
+          const encrypted = encrypt(updates.healthConditions);
+          user.healthConditions = encrypted;
+          
+          // Also encrypt for AI/system use
+          const systemEncrypted = encrypt(updates.healthConditions);
+          user.healthConditionsSystemEncrypted = systemEncrypted;
+        } else {
+          // Empty array - clear the data
+          user.healthConditions = null;
+          user.healthConditionsSystemEncrypted = null;
+        }
       }
 
-      // Health data encryption (only if key provided)
-      if (updates.healthConditions && updates.healthDataKey) {
-        const encrypted = user.encryptHealthData(updates.healthConditions, updates.healthDataKey);
-        user.healthConditions = encrypted;
+      // Encrypt allergies with system key
+      if (updates.allergies !== undefined) {
+        if (Array.isArray(updates.allergies) && updates.allergies.length > 0) {
+          const encrypted = encrypt(updates.allergies);
+          user.allergies = encrypted;
+          
+          const systemEncrypted = encrypt(updates.allergies);
+          user.allergiesSystemEncrypted = systemEncrypted;
+        } else {
+          user.allergies = null;
+          user.allergiesSystemEncrypted = null;
+        }
       }
 
-      if (updates.allergies && updates.healthDataKey) {
-        const encrypted = user.encryptHealthData(updates.allergies, updates.healthDataKey);
-        user.allergies = encrypted;
-      }
-
-      if (updates.healthConditions && updates.healthDataKey) {
-        // 1. Encrypt with user's key (for profile editing)
-        const userEncrypted = user.encryptHealthData(updates.healthConditions, updates.healthDataKey);
-        user.healthConditions = userEncrypted;
-
-        // 2. Encrypt with SYSTEM key (for AI analysis)
-        const { encrypt: systemEncrypt } = require('../utils/encryption');
-        const systemEncrypted = systemEncrypt(updates.healthConditions);
-        user.healthConditionsSystemEncrypted = systemEncrypted;
-      }
-
-      // Same for allergies
-      if (updates.allergies && updates.healthDataKey) {
-        const userEncrypted = user.encryptHealthData(updates.allergies, updates.healthDataKey);
-        user.allergies = userEncrypted;
-        
-        const { encrypt: systemEncrypt } = require('../utils/encryption');
-        const systemEncrypted = systemEncrypt(updates.allergies);
-        user.allergiesSystemEncrypted = systemEncrypted;
+      // Mark as migrated if this is first save with system key
+      if (!user.migratedToSystemKey && (updates.healthConditions || updates.allergies)) {
+        user.migratedToSystemKey = true;
       }
 
       await user.save();
@@ -155,7 +155,8 @@ const profileController = {
         ...user.toObject(),
         healthConditions: [],
         allergies: [],
-        hasHealthKey: user.hasHealthKey || false
+        hasHealthKey: false,
+        migratedToSystemKey: user.migratedToSystemKey
       };
 
       res.json({
@@ -172,49 +173,37 @@ const profileController = {
     }
   },
 
-  // Get decrypted health conditions (for user editing)
+  // Get decrypted health conditions (no key required - uses system key)
   async getHealthConditions(req, res) {
     try {
       const userId = req.session.userId;
-      const { key } = req.query;
-
-      if (!userId || !key) {
+      if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Missing credentials'
+          error: 'Not authenticated'
         });
       }
 
-      const user = await User.findById(userId).select('healthConditions healthKeyHash');
-      if (!user || !user.healthConditions) {
-        return res.json({
-          success: true,
-          conditions: []
-        });
+      const user = await User.findById(userId).select('healthConditions migratedToSystemKey');
+      if (!user) {
+        return res.json({ success: true, conditions: [] });
       }
-
-      // Verify key
-      const isValid = await bcrypt.compare(key, user.healthKeyHash);
-      if (!isValid) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid health key'
-        });
+      
+      // If no encrypted data exists
+      if (!user.healthConditions) {
+        return res.json({ success: true, conditions: [] });
       }
-
-      const decrypted = user.decryptHealthData(user.healthConditions, key);
-      if (decrypted === null) {
-        return res.status(400).json({
-          success: false,
-          error: 'Decryption failed'
-        });
-      }
-
+      
+      // Decrypt using system key
+      const decrypted = decrypt(user.healthConditions);
+      
       res.json({
         success: true,
-        conditions: decrypted
+        conditions: Array.isArray(decrypted) ? decrypted : []
       });
+      
     } catch (error) {
+      console.error('Get health conditions error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get health conditions'
@@ -222,48 +211,37 @@ const profileController = {
     }
   },
 
-  // Get decrypted allergies (for user editing)
+  // Get decrypted allergies (no key required - uses system key)
   async getAllergies(req, res) {
     try {
       const userId = req.session.userId;
-      const { key } = req.query;
-
-      if (!userId || !key) {
+      if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Missing credentials'
+          error: 'Not authenticated'
         });
       }
 
-      const user = await User.findById(userId).select('allergies healthKeyHash');
-      if (!user || !user.allergies) {
-        return res.json({
-          success: true,
-          allergies: []
-        });
+      const user = await User.findById(userId).select('allergies migratedToSystemKey');
+      if (!user) {
+        return res.json({ success: true, allergies: [] });
       }
-
-      const isValid = await bcrypt.compare(key, user.healthKeyHash);
-      if (!isValid) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid health key'
-        });
+      
+      // If no encrypted data exists
+      if (!user.allergies) {
+        return res.json({ success: true, allergies: [] });
       }
-
-      const decrypted = user.decryptHealthData(user.allergies, key);
-      if (decrypted === null) {
-        return res.status(400).json({
-          success: false,
-          error: 'Decryption failed'
-        });
-      }
-
+      
+      // Decrypt using system key
+      const decrypted = decrypt(user.allergies);
+      
       res.json({
         success: true,
-        allergies: decrypted
+        allergies: Array.isArray(decrypted) ? decrypted : []
       });
+      
     } catch (error) {
+      console.error('Get allergies error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get allergies'
@@ -271,169 +249,11 @@ const profileController = {
     }
   },
 
-  // Setup health key (new users)
-  async setupHealthKey(req, res) {
-    try {
-      const userId = req.session.userId;
-      const { healthKey } = req.body;
-
-      if (!userId || !healthKey) {
-        return res.status(400).json({
-          success: false,
-          error: 'Health key is required'
-        });
-      }
-
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found'
-        });
-      }
-
-      // Hash and store health key
-      const hash = await bcrypt.hash(healthKey, 10);
-      user.healthKeyHash = hash;
-      user.hasHealthKey = true;
-      await user.save();
-
-      res.json({
-        success: true,
-        message: 'Health key setup complete'
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to setup health key'
-      });
-    }
-  },
-
-  // Verify health key (for frontend validation)
-  async verifyHealthKey(req, res) {
-    try {
-      const userId = req.session.userId;
-      const { healthKey } = req.body;
-
-      if (!userId || !healthKey) {
-        return res.status(400).json({
-          success: false,
-          error: 'Health key is required'
-        });
-      }
-
-      const user = await User.findById(userId).select('healthKeyHash');
-      if (!user || !user.healthKeyHash) {
-        return res.status(404).json({
-          success: false,
-          error: 'No health key found'
-        });
-      }
-
-      const isValid = await bcrypt.compare(healthKey, user.healthKeyHash);
-      res.json({
-        success: true,
-        valid: isValid
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to verify health key'
-      });
-    }
-  },
-
-  // Decrypt health conditions (for AI/system use - NOT recommended for frontend)
-  async decryptHealthConditions(req, res) {
-    try {
-      const userId = req.session.userId;
-      const { key } = req.query;
-
-      if (!userId || !key) {
-        return res.status(401).json({
-          success: false,
-          error: 'Missing credentials'
-        });
-      }
-
-      const user = await User.findById(userId).select('healthConditions healthKeyHash');
-      if (!user || !user.healthConditions) {
-        return res.json({
-          success: true,
-          conditions: []
-        });
-      }
-
-      const isValid = await bcrypt.compare(key, user.healthKeyHash);
-      if (!isValid) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid health key'
-        });
-      }
-
-      const decrypted = user.decryptHealthData(user.healthConditions, key);
-      res.json({
-        success: true,
-        conditions: decrypted || []
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to decrypt health conditions'
-      });
-    }
-  },
-
-  // Decrypt allergies (for AI/system use - NOT recommended for frontend)
-  async decryptAllergies(req, res) {
-    try {
-      const userId = req.session.userId;
-      const { key } = req.query;
-
-      if (!userId || !key) {
-        return res.status(401).json({
-          success: false,
-          error: 'Missing credentials'
-        });
-      }
-
-      const user = await User.findById(userId).select('allergies healthKeyHash');
-      if (!user || !user.allergies) {
-        return res.json({
-          success: true,
-          allergies: []
-        });
-      }
-
-      const isValid = await bcrypt.compare(key, user.healthKeyHash);
-      if (!isValid) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid health key'
-        });
-      }
-
-      const decrypted = user.decryptHealthData(user.allergies, key);
-      res.json({
-        success: true,
-        allergies: decrypted || []
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to decrypt allergies'
-      });
-    }
-  },
-
-  // Get predefined examples
+  // Get predefined examples (for UI suggestions)
   async getPredefinedExamples(req, res) {
     try {
       const { HEALTH_CONDITIONS_ARRAY, ALLERGIES_ARRAY } = require('../constants');
       
-      // Get random selection of conditions and allergies for variety
       const getRandomSubset = (arr, count) => {
         const shuffled = [...arr];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -457,6 +277,76 @@ const profileController = {
       res.status(500).json({
         success: false,
         error: 'Failed to get predefined examples'
+      });
+    }
+  },
+
+  // Helper: Calculate BMI without saving
+  async calculateBMI(req, res) {
+    try {
+      const { height, weight } = req.body;
+      
+      if (!height || !weight) {
+        return res.status(400).json({
+          success: false,
+          error: 'Height and weight are required'
+        });
+      }
+
+      let heightInMeters, weightInKg;
+      
+      if (height.unit === 'cm') {
+        heightInMeters = height.value / 100;
+      } else {
+        heightInMeters = height.value * 0.3048;
+      }
+      
+      if (weight.unit === 'kg') {
+        weightInKg = weight.value;
+      } else {
+        weightInKg = weight.value * 0.453592;
+      }
+      
+      const bmi = weightInKg / (heightInMeters * heightInMeters);
+      const roundedBMI = parseFloat(bmi.toFixed(1));
+      
+      let bmiCategory;
+      if (bmi < 18.5) {
+        bmiCategory = 'underweight';
+      } else if (bmi >= 18.5 && bmi < 25) {
+        bmiCategory = 'normal';
+      } else if (bmi >= 25 && bmi < 30) {
+        bmiCategory = 'overweight';
+      } else {
+        bmiCategory = 'obese';
+      }
+      
+      const getBMIInterpretation = (category) => {
+        switch (category) {
+          case 'underweight':
+            return 'You may need to gain weight. Consider consulting a healthcare provider.';
+          case 'normal':
+            return 'Your weight is within the healthy range. Maintain your current lifestyle.';
+          case 'overweight':
+            return 'Consider adopting a healthier diet and increasing physical activity.';
+          case 'obese':
+            return 'Consult a healthcare provider for personalized weight management advice.';
+          default:
+            return '';
+        }
+      };
+
+      res.json({
+        success: true,
+        bmi: roundedBMI,
+        bmiCategory,
+        interpretation: getBMIInterpretation(bmiCategory)
+      });
+    } catch (error) {
+      console.error('BMI calculation error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to calculate BMI'
       });
     }
   }

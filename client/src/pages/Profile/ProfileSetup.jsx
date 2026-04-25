@@ -1,4 +1,3 @@
-// client/src/pages/Profile/ProfileSetup.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,14 +28,12 @@ import {
   Activity,
   Lock,
   Shield,
-  Eye,
-  EyeOff,
   Plus,
   X,
-  Key,
   AlertCircle,
   ChevronDown,
   Sparkles,
+  NotebookPen,
   Dumbbell,
   Check,
   Heart,
@@ -153,136 +150,48 @@ const CustomDropdown = ({
   );
 };
 
-// BMI Indicator Component
+// BMI Indicator Component - Minimal & Creative Design
 const BMIIndicator = ({ bmi }) => {
   const getBMICategory = (bmi) => {
-    if (bmi < 18.5) return { category: 'Underweight', color: 'text-blue-400', bgColor: 'bg-blue-400', range: '0-18.4' };
-    if (bmi < 25) return { category: 'Normal', color: 'text-green-400', bgColor: 'bg-green-400', range: '18.5-24.9' };
-    if (bmi < 30) return { category: 'Overweight', color: 'text-yellow-400', bgColor: 'bg-yellow-400', range: '25-29.9' };
-    if (bmi < 35) return { category: 'Obese Class I', color: 'text-orange-400', bgColor: 'bg-orange-400', range: '30-34.9' };
-    if (bmi < 40) return { category: 'Obese Class II', color: 'text-red-400', bgColor: 'bg-red-400', range: '35-39.9' };
-    return { category: 'Obese Class III', color: 'text-red-600', bgColor: 'bg-red-600', range: '40+' };
+    if (bmi < 18.5) return { category: 'Underweight', color: '#60A5FA', barColor: 'bg-blue-400' };
+    if (bmi < 25) return { category: 'Normal', color: '#4ADE80', barColor: 'bg-green-400' };
+    if (bmi < 30) return { category: 'Overweight', color: '#FBBF24', barColor: 'bg-yellow-400' };
+    if (bmi < 35) return { category: 'Obese I', color: '#FB923C', barColor: 'bg-orange-400' };
+    if (bmi < 40) return { category: 'Obese II', color: '#F87171', barColor: 'bg-red-400' };
+    return { category: 'Obese III', color: '#DC2626', barColor: 'bg-red-600' };
   };
-
-  const calculateRotation = (bmi) => {
-    // Map BMI range (10-50) to rotation (-90deg to 90deg)
-    const clampedBMI = Math.min(Math.max(bmi, 10), 50);
-    return ((clampedBMI - 10) / 40) * 180 - 90;
-  };
-
-  if (!bmi) return null;
 
   const category = getBMICategory(bmi);
-  const rotation = calculateRotation(bmi);
+  const percentage = Math.min(((bmi - 10) / 35) * 100, 100);
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="relative w-32 h-32 mx-auto mb-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-3"
     >
-      {/* Circular background */}
-      <svg className="w-full h-full" viewBox="0 0 100 100">
-        {/* Background circle */}
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="#1f2937"
-          strokeWidth="10"
-        />
-        
-        {/* Colored segments */}
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="#60a5fa"
-          strokeWidth="10"
-          strokeDasharray="70.7 282.8"
-          strokeDashoffset="-17.7"
-          strokeLinecap="round"
-          transform="rotate(-90 50 50)"
-          className="opacity-30"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="#4ade80"
-          strokeWidth="10"
-          strokeDasharray="70.7 282.8"
-          strokeDashoffset="53"
-          strokeLinecap="round"
-          transform="rotate(-90 50 50)"
-          className="opacity-30"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="#fbbf24"
-          strokeWidth="10"
-          strokeDasharray="70.7 282.8"
-          strokeDashoffset="123.7"
-          strokeLinecap="round"
-          transform="rotate(-90 50 50)"
-          className="opacity-30"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="#f97316"
-          strokeWidth="10"
-          strokeDasharray="70.7 282.8"
-          strokeDashoffset="194.4"
-          strokeLinecap="round"
-          transform="rotate(-90 50 50)"
-          className="opacity-30"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="#ef4444"
-          strokeWidth="10"
-          strokeDasharray="70.7 282.8"
-          strokeDashoffset="265.1"
-          strokeLinecap="round"
-          transform="rotate(-90 50 50)"
-          className="opacity-30"
-        />
-      </svg>
-
-      {/* BMI Value and Category */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <motion.span 
-          key={bmi}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-xl font-bold text-white "
-        >
-          {bmi.toFixed(1)}
-        </motion.span>
-        <span className={`text-xs font-medium ${category.color}`}>
-          {category.category}
-        </span>
+      <div className="flex items-center justify-between">
+        <span className="text-3xl font-bold text-white">{bmi.toFixed(1)}</span>
+        <span className="text-sm" style={{ color: category.color }}>{category.category}</span>
       </div>
-
-      {/* Range indicators */}
-      <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-[10px] text-gray-600">
+      
+      <div className="relative h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute left-0 top-0 h-full rounded-full"
+          style={{ backgroundColor: category.color }}
+        />
+      </div>
+      
+      <div className="flex justify-between text-[9px] text-gray-600">
+        <span>10</span>
         <span>18.5</span>
         <span>25</span>
         <span>30</span>
         <span>35</span>
-        <span>40</span>
+        <span>45</span>
       </div>
     </motion.div>
   );
@@ -299,37 +208,32 @@ const ProfileSetup = ({ editMode = false }) => {
 
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
-
-  // States
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [healthKey, setHealthKey] = useState('');
-  const [showHealthKey, setShowHealthKey] = useState(false);
-  const [confirmHealthKey, setConfirmHealthKey] = useState('');
-  const [showConfirmHealthKey, setShowConfirmHealthKey] = useState(false);
-  const [hasHealthKey, setHasHealthKey] = useState(false);
-  const [isDecrypted, setIsDecrypted] = useState(false);
-  const [isDecrypting, setIsDecrypting] = useState(false);
-  const [decryptedConditions, setDecryptedConditions] = useState([]);
-  const [decryptedAllergies, setDecryptedAllergies] = useState([]);
-  const [invalidHealthData, setInvalidHealthData] = useState({
-    conditions: [],
-    allergies: [],
-    hasInvalidData: false
-  });
-  const [customConditionInput, setCustomConditionInput] = useState('');
-  const [customAllergyInput, setCustomAllergyInput] = useState('');
-  const [conditionSuggestions, setConditionSuggestions] = useState([]);
-  const [allergySuggestions, setAllergySuggestions] = useState([]);
-
   
+  // Edit mode state (replaces health key)
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+
   // Dropdown states
   const [showDietaryGoal, setShowDietaryGoal] = useState(false);
   const [showActivityLevel, setShowActivityLevel] = useState(false);
 
   // BMI state
   const [bmi, setBmi] = useState(null);
+  
+  // Custom input states
+  const [customConditionInput, setCustomConditionInput] = useState('');
+  const [customAllergyInput, setCustomAllergyInput] = useState('');
+  const [conditionSuggestions, setConditionSuggestions] = useState([]);
+  const [allergySuggestions, setAllergySuggestions] = useState([]);
+  
+  // Invalid data tracking
+  const [invalidHealthData, setInvalidHealthData] = useState({
+    conditions: [],
+    allergies: [],
+    hasInvalidData: false
+  });
 
-    // Form state
+  // Form state
   const [formData, setFormData] = useState({
     nickname: '',
     dateOfBirth: '',
@@ -342,6 +246,30 @@ const ProfileSetup = ({ editMode = false }) => {
     allergies: []
   });
 
+  // Load profile data when in editMode
+  useEffect(() => {
+    if (editMode && profile) {
+      setFormData({
+        nickname: profile.nickname || '',
+        dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
+        country: profile.country || '',
+        height: { 
+          value: profile.height?.value || '', 
+          unit: 'cm'
+        },
+        weight: { 
+          value: profile.weight?.value || '', 
+          unit: 'kg'
+        },
+        dietaryGoal: profile.dietaryGoal || 'healthy',
+        activityLevel: profile.activityLevel || 'moderate',
+        healthConditions: [],
+        allergies: []
+      });
+    }
+  }, [editMode, profile]);
+
+  // Auto-detect country
   useEffect(() => {
     if (!formData.country) {
       fetch("https://ipapi.co/json/")
@@ -361,14 +289,9 @@ const ProfileSetup = ({ editMode = false }) => {
     const weight = parseFloat(formData.weight.value);
     
     if (height && weight && height > 0 && weight > 0) {
-      // Height is in cm, convert to meters
       const heightInMeters = height / 100;
-      // Weight is in kg
-      
-      // Ensure we have valid numbers before calculating
       if (!isNaN(heightInMeters) && !isNaN(weight) && heightInMeters > 0 && weight > 0) {
         const bmiValue = weight / (heightInMeters * heightInMeters);
-        // Check if BMI is reasonable (between 10 and 60)
         if (bmiValue > 10 && bmiValue < 60) {
           setBmi(parseFloat(bmiValue.toFixed(1)));
         } else {
@@ -380,18 +303,43 @@ const ProfileSetup = ({ editMode = false }) => {
     } else {
       setBmi(null);
     }
-  }, [formData.height.value, formData.weight.value]); 
+  }, [formData.height.value, formData.weight.value]);
 
-  const formatOptionLabel = ({ value, label }) => (
-    <div className="flex items-center gap-2">
-      <ReactCountryFlag
-        svg
-        countryCode={value}
-        style={{ width: "1.25em", height: "1.25em" }}
-      />
-      <span>{label}</span>
-    </div>
-  );
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState({
+    height: '',
+    weight: ''
+  });
+
+  const validateHeight = (value) => {
+    if (!value) return '';
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue <= 0) return 'Please enter a valid height';
+    if (numValue < 50 || numValue > 300) {
+      return 'Height must be between 50cm and 300cm';
+    }
+    return '';
+  };
+
+  const validateWeight = (value) => {
+    if (!value) return '';
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue <= 0) return 'Please enter a valid weight';
+    if (numValue < 20 || numValue > 300) {
+      return 'Weight must be between 20kg and 300kg';
+    }
+    return '';
+  };
+
+  useEffect(() => {
+    const heightError = validateHeight(formData.height.value);
+    const weightError = validateWeight(formData.weight.value);
+    
+    setValidationErrors({
+      height: heightError,
+      weight: weightError
+    });
+  }, [formData.height.value, formData.weight.value]);
 
   const activityLevels = [
     { id: 'sedentary', label: 'Sedentary', description: 'Little or no exercise' },
@@ -434,36 +382,181 @@ const ProfileSetup = ({ editMode = false }) => {
     }
   ];
 
-  const predefinedConditions = HEALTH_CONDITIONS_LIST.slice(0, 12); // Show first 12 for UI
-  const predefinedAllergies = ALLERGIES_LIST.slice(0, 10); // Show first 10 for UI
+  const predefinedConditions = ['Hypertension', 'Diabetes', 'Migraine', 'Stomach Ulcer'];
+  const predefinedAllergies = ['Peanuts (Groundnuts)', 'Milk', 'Egg', 'Dairy'];
 
-  // Check if user already has health key
-  useEffect(() => {
-    if (editMode && profile) {
-      setFormData({
-        nickname: profile.nickname || '',
-        dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
-        country: profile.country || '',
-        height: { 
-          value: profile.height?.value || '', 
-          unit: 'cm' // Force to cm
-        },
-        weight: { 
-          value: profile.weight?.value || '', 
-          unit: 'kg' // Force to kg
-        },
-        dietaryGoal: profile.dietaryGoal || 'healthy',
-        activityLevel: profile.activityLevel || 'moderate',
-        healthConditions: Array.isArray(profile.healthConditions) ? profile.healthConditions : [],
-        allergies: Array.isArray(profile.allergies) ? profile.allergies : []
-      });
+  // Handle Edit button click - decrypt health data
+  const handleEditClick = async () => {
+    // If already in edit mode, lock it and clear data (no API call)
+    if (isEditMode) {
+      setIsEditMode(false);
+      // Clear health data from form
+      setFormData(prev => ({
+        ...prev,
+        healthConditions: [],
+        allergies: []
+      }));
+      // Clear any custom inputs and suggestions
+      setCustomConditionInput('');
+      setCustomAllergyInput('');
+      setConditionSuggestions([]);
+      setAllergySuggestions([]);
+      setInvalidHealthData({ conditions: [], allergies: [], hasInvalidData: false });
+      showSuccess('Health data locked');
+      return;
     }
-    if (profile?.hasHealthKey) {
-      setHasHealthKey(true);
+    
+    // Otherwise, decrypt and enter edit mode
+    setIsDecrypting(true);
+    try {
+      const [conditionsRes, allergiesRes] = await Promise.all([
+        apiFetch('/profile/health-conditions'),
+        apiFetch('/profile/allergies')
+      ]);
+      
+      if (conditionsRes.success) {
+        setFormData(prev => ({ 
+          ...prev, 
+          healthConditions: conditionsRes.conditions || [] 
+        }));
+      }
+      
+      if (allergiesRes.success) {
+        setFormData(prev => ({ 
+          ...prev, 
+          allergies: allergiesRes.allergies || [] 
+        }));
+      }
+      
+      setIsEditMode(true);
+      showSuccess('Health data decrypted');
+    } catch (error) {
+      console.error('Decryption error:', error);
+      showError('Failed to decrypt health data');
+    } finally {
+      setIsDecrypting(false);
     }
-  }, [editMode, profile]);
+  };
 
-  // validation
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const calculateAge = (dateString) => {
+    const today = new Date();
+    const birthDate = new Date(dateString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Health condition handlers (modified - use isEditMode)
+  const handleHealthCondition = (action, condition) => {
+    if (!isEditMode) {
+      showError('Click Edit button to modify health data');
+      return;
+    }
+    
+    if (action === 'add') {
+      if (!isValidHealthCondition(condition)) {
+        showError(`Health condition "${condition}" not supported.`);
+        return;
+      }
+    }
+    
+    setFormData(prev => {
+      const conditions = [...prev.healthConditions];
+      if (action === 'add' && !conditions.includes(condition)) {
+        conditions.push(condition);
+      } else if (action === 'remove') {
+        const index = conditions.indexOf(condition);
+        if (index > -1) conditions.splice(index, 1);
+      }
+      return { ...prev, healthConditions: conditions };
+    });
+    
+    setTimeout(() => {
+      validateHealthDataSelection(formData.healthConditions, formData.allergies);
+    }, 0);
+  };
+
+  const handleAllergy = (action, allergy) => {
+    if (!isEditMode) {
+      showError('Click Edit button to modify health data');
+      return;
+    }
+    
+    if (action === 'add') {
+      if (!isValidAllergy(allergy)) {
+        showError(`Allergy "${allergy}" not supported.`);
+        return;
+      }
+    }
+    
+    setFormData(prev => {
+      const allergies = [...prev.allergies];
+      if (action === 'add' && !allergies.includes(allergy)) {
+        allergies.push(allergy);
+      } else if (action === 'remove') {
+        const index = allergies.indexOf(allergy);
+        if (index > -1) allergies.splice(index, 1);
+      }
+      return { ...prev, allergies };
+    });
+    
+    setTimeout(() => {
+      validateHealthDataSelection(formData.healthConditions, formData.allergies);
+    }, 0);
+  };
+
+  const handleConditionInputChange = (e) => {
+    const value = e.target.value;
+    setCustomConditionInput(value);
+    const suggestions = getHealthConditionSuggestions(value);
+    setConditionSuggestions(suggestions);
+  };
+
+  const handleAllergyInputChange = (e) => {
+    const value = e.target.value;
+    setCustomAllergyInput(value);
+    const suggestions = getAllergySuggestions(value);
+    setAllergySuggestions(suggestions);
+  };
+
+  const handleAddCustomCondition = () => {
+    if (customConditionInput.trim() && isEditMode) {
+      if (isValidHealthCondition(customConditionInput.trim())) {
+        handleHealthCondition('add', customConditionInput.trim());
+        setCustomConditionInput('');
+        setConditionSuggestions([]);
+      } else {
+        showError(`Health condition "${customConditionInput}" not supported.`);
+      }
+    } else if (!isEditMode) {
+      showError('Click Edit button to modify health data');
+    }
+  };
+
+  const handleAddCustomAllergy = () => {
+    if (customAllergyInput.trim() && isEditMode) {
+      if (isValidAllergy(customAllergyInput.trim())) {
+        handleAllergy('add', customAllergyInput.trim());
+        setCustomAllergyInput('');
+        setAllergySuggestions([]);
+      } else {
+        showError(`Allergy "${customAllergyInput}" not supported.`);
+      }
+    } else if (!isEditMode) {
+      showError('Click Edit button to modify health data');
+    }
+  };
+
   const validateHealthDataSelection = (conditions, allergies) => {
     const invalidConditions = [];
     const invalidAllergies = [];
@@ -490,250 +583,6 @@ const ProfileSetup = ({ editMode = false }) => {
     
     return !hasInvalidData;
   };
-
-  // Create health key (for new users)
-  const handleCreateHealthKey = async () => {
-    if (healthKey.length < 8) {
-      showError('Health key must be at least 8 characters');
-      return;
-    }
-    if (healthKey !== confirmHealthKey) {
-      showError('Health keys do not match');
-      return;
-    }
-    try {
-      const result = await updateProfile({
-        ...formData,
-        healthDataKey: healthKey,
-        hasHealthKey: true
-      });
-      if (result.success) {
-        setHasHealthKey(true);
-        setShowKeyModal(false);
-        setHealthKey('');
-        setConfirmHealthKey('');
-        showSuccess('Health key created successfully');
-      }
-    } catch (error) {
-      showError('Failed to create health key');
-    }
-  };
-
-  // Decrypt health data (for existing users)
-  const handleDecryptHealthData = async () => {
-    if (!healthKey.trim()) {
-      showError('Please enter your health key');
-      return;
-    }
-    setIsDecrypting(true);
-    try {
-      const [conditionsRes, allergiesRes] = await Promise.all([
-        apiFetch(`/profile/health-conditions?key=${encodeURIComponent(healthKey)}`),
-        apiFetch(`/profile/allergies?key=${encodeURIComponent(healthKey)}`)
-      ]);
-      const conditionsData = conditionsRes;
-      const allergiesData = allergiesRes;
-      
-      if (conditionsData.success) {
-        setDecryptedConditions(Array.isArray(conditionsData.conditions) ? conditionsData.conditions : []);
-        setFormData(prev => ({ 
-          ...prev, 
-          healthConditions: Array.isArray(conditionsData.conditions) ? conditionsData.conditions : [] 
-        }));
-      }
-      if (allergiesData.success) {
-        setDecryptedAllergies(Array.isArray(allergiesData.allergies) ? allergiesData.allergies : []);
-        setFormData(prev => ({ 
-          ...prev, 
-          allergies: Array.isArray(allergiesData.allergies) ? allergiesData.allergies : [] 
-        }));
-      }
-      if (conditionsData.success || allergiesData.success) {
-        setIsDecrypted(true);
-        showSuccess('Health data decrypted!');
-      } else {
-        showError('Invalid health key');
-      }
-    } catch (error) {
-      showError('Failed to decrypt health data');
-    } finally {
-      setIsDecrypting(false);
-    }
-  };
-
-  // Handle health condition actions
-  const handleHealthCondition = (action, condition) => {
-    if (!isDecrypted && !hasHealthKey) {
-      showError('Please create or enter health key first');
-      return;
-    }
-    
-    if (action === 'add') {
-      // Validate before adding
-      if (!isValidHealthCondition(condition)) {
-        showError(`Health condition "${condition}" not supported.`);
-        return;
-      }
-    }
-    
-    setFormData(prev => {
-      const conditions = Array.isArray(prev.healthConditions) ? [...prev.healthConditions] : [];
-      if (action === 'add' && !conditions.includes(condition)) {
-        conditions.push(condition);
-      } else if (action === 'remove') {
-        const index = conditions.indexOf(condition);
-        if (index > -1) conditions.splice(index, 1);
-      }
-      return { ...prev, healthConditions: conditions };
-    });
-    
-    if (isDecrypted) {
-      if (action === 'add' && !decryptedConditions.includes(condition)) {
-        setDecryptedConditions(prev => [...prev, condition]);
-      } else if (action === 'remove') {
-        setDecryptedConditions(prev => prev.filter(c => c !== condition));
-      }
-    }
-    
-    // Re-validate after change
-    setTimeout(() => {
-      validateHealthDataSelection(formData.healthConditions, formData.allergies);
-    }, 0);
-  };
-
-
-  // Handle allergy actions
-  const handleAllergy = (action, allergy) => {
-    if (!isDecrypted && !hasHealthKey) {
-      showError('Please create or enter health key first');
-      return;
-    }
-    
-    if (action === 'add') {
-      if (!isValidAllergy(allergy)) {
-        showError(`Allergy "${allergy}" not supported.`);
-        return;
-      }
-    }
-    
-    setFormData(prev => {
-      const allergies = Array.isArray(prev.allergies) ? [...prev.allergies] : [];
-      if (action === 'add' && !allergies.includes(allergy)) {
-        allergies.push(allergy);
-      } else if (action === 'remove') {
-        const index = allergies.indexOf(allergy);
-        if (index > -1) allergies.splice(index, 1);
-      }
-      return { ...prev, allergies };
-    });
-    
-    if (isDecrypted) {
-      if (action === 'add' && !decryptedAllergies.includes(allergy)) {
-        setDecryptedAllergies(prev => [...prev, allergy]);
-      } else if (action === 'remove') {
-        setDecryptedAllergies(prev => prev.filter(a => a !== allergy));
-      }
-    }
-    
-    setTimeout(() => {
-      validateHealthDataSelection(formData.healthConditions, formData.allergies);
-    }, 0);
-  };
-
-  // Add suggestion handlers
-  const handleConditionInputChange = (e) => {
-    const value = e.target.value;
-    setCustomConditionInput(value);
-    const suggestions = getHealthConditionSuggestions(value);
-    setConditionSuggestions(suggestions);
-  };
-
-  const handleAllergyInputChange = (e) => {
-    const value = e.target.value;
-    setCustomAllergyInput(value);
-    const suggestions = getAllergySuggestions(value);
-    setAllergySuggestions(suggestions);
-  };
-
-  const handleAddCustomCondition = () => {
-    if (customConditionInput.trim() && isDecrypted) {
-      if (isValidHealthCondition(customConditionInput.trim())) {
-        handleHealthCondition('add', customConditionInput.trim());
-        setCustomConditionInput('');
-        setConditionSuggestions([]);
-      } else {
-        showError(`Health condition "${customConditionInput}" not supported.`);
-      }
-    }
-  };
-
-  const handleAddCustomAllergy = () => {
-    if (customAllergyInput.trim() && isDecrypted) {
-      if (isValidAllergy(customAllergyInput.trim())) {
-        handleAllergy('add', customAllergyInput.trim());
-        setCustomAllergyInput('');
-        setAllergySuggestions([]);
-      } else {
-        showError(`Allergy "${customAllergyInput}" not supported.`);
-      }
-    }
-  };
-
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const calculateAge = (dateString) => {
-    const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const validateHeight = (value) => {
-    if (!value) return '';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue <= 0) return 'Please enter a valid height';
-    if (numValue < 50 || numValue > 300) {
-      return 'Height must be between 50cm and 300cm';
-    }
-    return '';
-  };
-
-  const validateWeight = (value) => {
-    if (!value) return '';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue <= 0) return 'Please enter a valid weight';
-    if (numValue < 20 || numValue > 300) {
-      return 'Weight must be between 20kg and 300kg';
-    }
-    return '';
-  };
-
-  // Add state for validation errors
-  const [validationErrors, setValidationErrors] = useState({
-    height: '',
-    weight: ''
-  });
-
-  // Add validation useEffect
-  useEffect(() => {
-    const heightError = validateHeight(formData.height.value);
-    const weightError = validateWeight(formData.weight.value);
-    
-    setValidationErrors({
-      height: heightError,
-      weight: weightError
-    });
-  }, [formData.height.value, formData.weight.value]);
 
   const validateStep1 = () => {
     if (!formData.nickname.trim()) {
@@ -795,7 +644,6 @@ const ProfileSetup = ({ editMode = false }) => {
 
     if (!validateStep2()) return;
     
-    // Final validation before submission
     const isValid = validateHealthDataSelection(
       formData.healthConditions,
       formData.allergies
@@ -808,18 +656,24 @@ const ProfileSetup = ({ editMode = false }) => {
 
     try {
       const submissionData = {
-        ...formData,
-        healthConditions: Array.isArray(formData.healthConditions) ? formData.healthConditions : [],
-        allergies: Array.isArray(formData.allergies) ? formData.allergies : [],
-        healthDataKey: healthKey || undefined,
-        hasHealthKey: hasHealthKey || !!healthKey
+        nickname: formData.nickname,
+        dateOfBirth: formData.dateOfBirth,
+        country: formData.country,
+        height: formData.height,
+        weight: formData.weight,
+        dietaryGoal: formData.dietaryGoal,
+        activityLevel: formData.activityLevel,
+        healthConditions: formData.healthConditions,
+        allergies: formData.allergies
       };
 
       await updateProfile(submissionData);
+      
+      // Reset edit mode after save
+      setIsEditMode(false);
       showSuccess(editMode ? 'Profile updated!' : 'Profile setup complete!');
       navigate('/');
     } catch (error) {
-      // Check if error is from backend validation
       if (error.response?.data?.details) {
         const details = error.response.data.details;
         if (details.invalidConditions?.length) {
@@ -835,25 +689,24 @@ const ProfileSetup = ({ editMode = false }) => {
     }
   };
 
-  const getSafeConditions = () => {
-    const conditions = isDecrypted ? decryptedConditions : formData.healthConditions;
-    return Array.isArray(conditions) ? conditions : [];
-  };
+  const formatOptionLabel = ({ value, label }) => (
+    <div className="flex items-center gap-2">
+      <ReactCountryFlag
+        svg
+        countryCode={value}
+        style={{ width: "1.25em", height: "1.25em" }}
+      />
+      <span>{label}</span>
+    </div>
+  );
 
-  const getSafeAllergies = () => {
-    const allergies = isDecrypted ? decryptedAllergies : formData.allergies;
-    return Array.isArray(allergies) ? allergies : [];
-  };
-
-  // Step indicators
   const steps = [
     { number: 1, title: 'Personal Info', icon: User },
     { number: 2, title: 'Health & Lifestyle', icon: Heart }
   ];
 
   return (
-    <div className="min-h-screen  bg-gray-900/95 from-gray-950 via-gray-900 to-gray-950">
-      {/* Subtle Background Pattern */}
+    <div className="min-h-screen bg-gray-900/95 from-gray-950 via-gray-900 to-gray-950">
       <div className="fixed inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
           backgroundImage: `radial-gradient(circle at 2px 2px, gray 1px, transparent 0)`,
@@ -862,7 +715,6 @@ const ProfileSetup = ({ editMode = false }) => {
       </div>
 
       <div className="relative max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-16">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -880,7 +732,6 @@ const ProfileSetup = ({ editMode = false }) => {
           </p>
         </motion.div>
 
-        {/* Step Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center gap-4">
             {steps.map((step, index) => (
@@ -924,7 +775,6 @@ const ProfileSetup = ({ editMode = false }) => {
           </div>
         </div>
 
-        {/* Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -932,7 +782,6 @@ const ProfileSetup = ({ editMode = false }) => {
           className="bg-gray-900/30 rounded-none sm:rounded-xl p-4 sm:p-8"
         >
           <form id="profile-form" onSubmit={currentStep === 2 ? handleSubmit : (e) => e.preventDefault()} className="space-y-8">
-            {/* Step 1: Personal Information */}
             <AnimatePresence mode="wait">
               {currentStep === 1 && (
                 <motion.div
@@ -944,14 +793,13 @@ const ProfileSetup = ({ editMode = false }) => {
                 >
                   <div>
                     <div className="flex items-center gap-2 mb-5">
-                      <Sparkles className="w-4 h-4 text-primary-400" />
+                      <NotebookPen className="w-4 h-4 text-primary-400" />
                       <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Basic Information
                       </h2>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Nickname */}
                       <div>
                         <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
                           <User className="w-3.5 h-3.5 inline mr-1" />
@@ -967,7 +815,6 @@ const ProfileSetup = ({ editMode = false }) => {
                         />
                       </div>
 
-                      {/* Date of Birth */}
                       <div>
                         <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
                           <Calendar className="w-3.5 h-3.5 inline mr-1" />
@@ -982,7 +829,6 @@ const ProfileSetup = ({ editMode = false }) => {
                         />
                       </div>
 
-                      {/* Country */}
                       <div>
                         <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
                           <Globe className="w-3.5 h-3.5 inline mr-1" />
@@ -990,12 +836,8 @@ const ProfileSetup = ({ editMode = false }) => {
                         </label>
                         <Select
                           options={countryOptions}
-                          value={countryOptions.find(
-                            (c) => c.value === formData.country
-                          )}
-                          onChange={(selected) =>
-                            handleInputChange("country", selected.value)
-                          }
+                          value={countryOptions.find(c => c.value === formData.country)}
+                          onChange={(selected) => handleInputChange("country", selected.value)}
                           formatOptionLabel={formatOptionLabel}
                           placeholder="Select your country"
                           isSearchable
@@ -1008,22 +850,16 @@ const ProfileSetup = ({ editMode = false }) => {
                               color: "white",
                             }),
                             singleValue: (base) => ({ ...base, color: "white" }),
-                            menu: (base) => ({
-                              ...base,
-                              backgroundColor: "#111827",
-                            }),
+                            menu: (base) => ({ ...base, backgroundColor: "#111827" }),
                             option: (base, state) => ({
                               ...base,
-                              backgroundColor: state.isFocused
-                                ? "#1f2937"
-                                : "#111827",
+                              backgroundColor: state.isFocused ? "#1f2937" : "#111827",
                               color: "white",
                             }),
                           }}
                         />
                       </div>
 
-                      {/* Height (cm only) */}
                       <div>
                         <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
                           <Ruler className="w-3.5 h-3.5 inline mr-1" />
@@ -1035,7 +871,7 @@ const ProfileSetup = ({ editMode = false }) => {
                           onChange={(e) => handleInputChange('height', {
                             ...formData.height,
                             value: e.target.value,
-                            unit: 'cm' // Ensure unit stays cm
+                            unit: 'cm'
                           })}
                           className={`w-full px-4 py-3 bg-gray-900/50 border rounded-lg focus:outline-none text-white text-sm transition-colors ${
                             validationErrors.height ? 'border-red-500/50 focus:border-red-500/30' : 'border-gray-800 focus:border-primary-500/30'
@@ -1050,7 +886,6 @@ const ProfileSetup = ({ editMode = false }) => {
                         )}
                       </div>
 
-                      {/* Weight (kg only) */}
                       <div>
                         <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
                           <Weight className="w-3.5 h-3.5 inline mr-1" />
@@ -1062,7 +897,7 @@ const ProfileSetup = ({ editMode = false }) => {
                           onChange={(e) => handleInputChange('weight', {
                             ...formData.weight,
                             value: e.target.value,
-                            unit: 'kg' // Ensure unit stays kg
+                            unit: 'kg'
                           })}
                           className={`w-full px-4 py-3 bg-gray-900/50 border rounded-lg focus:outline-none text-white text-sm transition-colors ${
                             validationErrors.weight ? 'border-red-500/50 focus:border-red-500/30' : 'border-gray-800 focus:border-primary-500/30'
@@ -1078,21 +913,51 @@ const ProfileSetup = ({ editMode = false }) => {
                       </div>
                     </div>
 
-                    {/* BMI Indicator */}
                     {bmi && (
-                      <div className="mt-6 pt-6 border-t border-gray-800">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Info className="w-4 h-4 text-primary-400" />
-                          <h3 className="text-sm font-medium text-white">Your BMI (WHO Classification)</h3>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1, duration: 0.5 }}
+                        className="mt-6 pt-6 border-t border-gray-800"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-4 rounded-full bg-gradient-to-b from-primary-400 to-primary-600" />
+                            <h3 className="text-sm font-medium text-white">Body Mass Index</h3>
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="text-[10px] text-gray-600 hover:text-primary-400 transition-colors"
+                          >
+                            WHO Classification
+                          </motion.button>
                         </div>
+                        
                         <BMIIndicator bmi={bmi} />
-                      </div>
+                        
+                        {/* Dynamic Health Message */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.4 }}
+                          className="mt-8 text-center"
+                        >
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+                            <span className="text-[10px] font-medium text-gray-400">
+                              {bmi < 18.5 && "💡 A balanced diet can help reach healthy weight range"}
+                              {bmi >= 18.5 && bmi < 25 && "🎯 You're in the optimal range! Keep it up"}
+                              {bmi >= 25 && bmi < 30 && "📉 Small lifestyle changes can make a big difference"}
+                              {bmi >= 30 && "🌟 Every step toward better nutrition counts"}
+                            </span>
+                          </div>
+                        </motion.div>
+                      </motion.div>
                     )}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 2: Health & Lifestyle Information */}
               {currentStep === 2 && (
                 <motion.div
                   key="step2"
@@ -1101,7 +966,6 @@ const ProfileSetup = ({ editMode = false }) => {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {/* Dietary Goal with Custom Dropdown */}
                   <div className="mb-6 sm:mb-8">
                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                       <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-400" />
@@ -1121,7 +985,6 @@ const ProfileSetup = ({ editMode = false }) => {
                     />
                   </div>
 
-                  {/* Activity Level with Custom Dropdown */}
                   <div className="mb-6 sm:mb-8">
                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                       <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-400" />
@@ -1142,82 +1005,62 @@ const ProfileSetup = ({ editMode = false }) => {
                     />
                   </div>
 
-                  {/* Health Information */}
+                  {/* Health Information Section */}
                   <div>
-                    <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-5">
-                      <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-400" />
-                      <h2 className="text-[10px] sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Health Information
-                      </h2>
-                    </div>
-
-                    {/* Health Key Status */}
-                    <div className="mb-6 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            hasHealthKey ? 'bg-green-500/10' : 'bg-yellow-500/10'
-                          }`}>
-                            <Lock className={`w-5 h-5 ${hasHealthKey ? 'text-green-400' : 'text-yellow-400'}`} />
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-white mb-1">
-                              {hasHealthKey ? 'Health Key Created' : 'Health Key Required'}
-                            </h4>
-                            <p className="text-xs text-gray-500">
-                              {hasHealthKey
-                                ? 'Your health data is securely encrypted'
-                                : 'Create a key to securely store your health information'
-                              }
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {!hasHealthKey ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowKeyModal(true)}
-                            className="px-4 py-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20 text-sm"
-                          >
-                            <Key className="w-4 h-4 inline mr-2" />
-                            Create Key
-                          </button>
-                        ) : isDecrypting ? (
-                          <div className="flex items-center gap-2 text-primary-400 text-sm">
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            >
-                              <Loader className="w-4 h-4" />
-                            </motion.div>
-                            Decrypting...
-                          </div>
-                        ) : !isDecrypted ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowKeyModal(true)}
-                            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors border border-gray-700 text-sm"
-                          >
-                            Enter Key
-                          </button>
-                        ) : (
-                          <div className="text-green-400 text-sm">
-                            Decrypted
-                          </div>
-                        )}
+                    <div className="flex items-center justify-between mb-3 sm:mb-5">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-400" />
+                        <h2 className="text-[10px] sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Health Information
+                        </h2>
                       </div>
+                      
+                      {/* Edit Button */}
+<button
+  type="button"
+  onClick={handleEditClick}
+  disabled={isDecrypting}
+  className={`px-3 sm:px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${
+    isEditMode 
+      ? 'border-green-500 bg-green-500/10 text-green-400'
+      : 'border-gray-600 hover:border-green-500 text-gray-400 hover:text-green-400'
+  }`}
+>
+  {isDecrypting ? (
+    <>
+      <Loader className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+      <span className="hidden sm:inline">Decrypting...</span>
+      <span className="inline sm:hidden">...</span>
+    </>
+  ) : isEditMode ? (
+    <>
+      <Lock className="w-3 h-3 sm:w-4 sm:h-4" />
+      {/* Desktop text */}
+      <span className="hidden sm:inline">Decrypted - Editing Mode</span>
+      {/* Mobile text - shorter */}
+      <span className="inline sm:hidden">Lock</span>
+    </>
+  ) : (
+    <>
+      <Lock className="w-3 h-3 sm:w-4 sm:h-4" />
+      {/* Desktop text */}
+      <span className="hidden sm:inline">Edit Health Data</span>
+      {/* Mobile text - shorter */}
+      <span className="inline sm:hidden">Edit</span>
+    </>
+  )}
+</button>
                     </div>
 
                     {/* Health Conditions */}
                     <div className="mb-8">
                       <h3 className="text-sm font-medium text-white mb-3">Health Conditions</h3>
                       
-                      {/* Selected Conditions */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {isDecrypted ? (
-                          decryptedConditions.map((condition, index) => (
-                            <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500/10 text-primary-400 rounded-lg border border-primary-500/20">
-                              <span className="text-xs">{condition}</span>
+                        {formData.healthConditions.map((condition, index) => (
+                          <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500/10 text-primary-400 rounded-lg border border-primary-500/20">
+                            <span className="text-xs">{condition}</span>
+                            {isEditMode && (
                               <button 
                                 type="button" 
                                 onClick={() => handleHealthCondition('remove', condition)}
@@ -1225,155 +1068,99 @@ const ProfileSetup = ({ editMode = false }) => {
                               >
                                 <X className="w-3 h-3" />
                               </button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-gray-600 italic">Enter health key to view conditions</p>
+                            )}
+                          </div>
+                        ))}
+                        {!isEditMode && formData.healthConditions.length === 0 && (
+                          <p className="text-xs text-gray-500 italic">Click Edit to view and manage health conditions</p>
                         )}
                       </div>
 
-                      {/* Common Conditions Grid */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-2">Common conditions:</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {predefinedConditions.map((condition) => (
-                            <button
-                              key={condition}
-                              type="button"
-                              onClick={() => {
-                                if (isDecrypted) {
-                                  handleHealthCondition(
-                                    getSafeConditions().includes(condition) ? 'remove' : 'add',
+                      {isEditMode && (
+                        <>
+                          <div className="mb-4">
+                            <p className="text-xs text-gray-500 mb-2">Common conditions:</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {predefinedConditions.map((condition) => (
+                                <button
+                                  key={condition}
+                                  type="button"
+                                  onClick={() => handleHealthCondition(
+                                    formData.healthConditions.includes(condition) ? 'remove' : 'add',
                                     condition
-                                  );
-                                } else {
-                                  showError('Please create or enter health key first');
-                                }
-                              }}
-                              className={`
-                                px-3 py-2 rounded-lg text-xs transition-colors text-left
-                                ${getSafeConditions().includes(condition)
-                                  ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
-                                  : 'bg-gray-900/50 text-gray-400 border border-gray-800 hover:border-gray-700'
-                                }
-                                ${(!isDecrypted) ? 'opacity-30' : ''}
-                              `}
-                            >
-                              <span className="truncate block">{condition}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Custom Condition Input */}
-                      <div className="relative">
-                        <div className="flex gap-2">
-                          <div className="flex-1 relative">
-                            <input
-                              type="text"
-                              value={customConditionInput}
-                              onChange={(e) => {
-                                if (isDecrypted) {
-                                  handleConditionInputChange(e);
-                                }
-                              }}
-                              onFocus={() => {
-                                if (!isDecrypted) {
-                                  showError('Please create or enter health key first');
-                                }
-                              }}
-                              placeholder="Add custom condition..."
-                              className={`w-full px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm ${
-                                (!isDecrypted) ? 'opacity-30' : ''
-                              }`}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  if (isDecrypted) {
-                                    handleAddCustomCondition();
-                                  } else {
-                                    showError('Please create or enter health key first');
-                                  }
-                                }
-                              }}
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (isDecrypted) {
-                                handleAddCustomCondition();
-                              } else {
-                                showError('Please create or enter health key first');
-                              }
-                            }}
-                            className={`px-4 py-2.5 rounded-lg transition-colors ${
-                              isDecrypted && customConditionInput.trim()
-                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                                : 'opacity-30 bg-gray-800 text-gray-300'
-                            }`}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                        {/* Show matching suggestions count */}
-                        {conditionSuggestions.length > 0 && customConditionInput && (
-                          <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto style={{ pointerEvents: 'auto' }}">
-                            {conditionSuggestions.map((suggestion, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                                onClick={() => {
-                                  setCustomConditionInput(suggestion);
-                                  setConditionSuggestions([]);
-                                   document.querySelector('input[placeholder="Add custom condition..."]')?.focus();
-                                }}
-                              >
-                                {suggestion}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Invalid Data Warning */}
-                      {invalidHealthData.hasInvalidData && (
-                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                          <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                            <div className="text-sm">
-                              <p className="text-red-400 font-medium mb-1">Invalid Health Data Detected</p>
-                              {invalidHealthData.conditions.length > 0 && (
-                                <p className="text-xs text-red-300">
-                                  Unsupported conditions: {invalidHealthData.conditions.join(', ')}
-                                </p>
-                              )}
-                              {invalidHealthData.allergies.length > 0 && (
-                                <p className="text-xs text-red-300 mt-1">
-                                  Unsupported allergies: {invalidHealthData.allergies.join(', ')}
-                                </p>
-                              )}
-                              <p className="text-xs text-red-400/80 mt-2">
-                                Please remove or correct these items before saving.
-                              </p>
+                                  )}
+                                  className={`px-3 py-2 rounded-lg text-xs transition-colors text-left ${
+                                    formData.healthConditions.includes(condition)
+                                      ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
+                                      : 'bg-gray-900/50 text-gray-400 border border-gray-800 hover:border-gray-700'
+                                  }`}
+                                >
+                                  <span className="truncate block">{condition}</span>
+                                </button>
+                              ))}
                             </div>
                           </div>
-                        </div>
-                      )}
 
+                          <div className="relative">
+                            <div className="flex gap-2">
+                              <div className="flex-1 relative">
+                                <input
+                                  type="text"
+                                  value={customConditionInput}
+                                  onChange={handleConditionInputChange}
+                                  placeholder="Add custom condition..."
+                                  className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddCustomCondition();
+                                    }
+                                  }}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleAddCustomCondition}
+                                className={`px-4 py-2.5 rounded-lg transition-colors ${
+                                  customConditionInput.trim()
+                                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                                    : 'opacity-30 bg-gray-800 text-gray-300'
+                                }`}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                            {conditionSuggestions.length > 0 && customConditionInput && (
+                              <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                {conditionSuggestions.map((suggestion, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                    onClick={() => {
+                                      setCustomConditionInput(suggestion);
+                                      setConditionSuggestions([]);
+                                    }}
+                                  >
+                                    {suggestion}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Allergies */}
                     <div className="mb-6">
                       <h3 className="text-sm font-medium text-white mb-3">Allergies</h3>
                       
-                      {/* Selected Allergies */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {isDecrypted ? (
-                          decryptedAllergies.map((allergy, index) => (
-                            <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 text-purple-400 rounded-lg border border-purple-500/20">
-                              <span className="text-xs">{allergy}</span>
+                        {formData.allergies.map((allergy, index) => (
+                          <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 text-purple-400 rounded-lg border border-purple-500/20">
+                            <span className="text-xs">{allergy}</span>
+                            {isEditMode && (
                               <button 
                                 type="button" 
                                 onClick={() => handleAllergy('remove', allergy)}
@@ -1381,130 +1168,114 @@ const ProfileSetup = ({ editMode = false }) => {
                               >
                                 <X className="w-3 h-3" />
                               </button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-gray-600 italic">Enter health key to view allergies</p>
+                            )}
+                          </div>
+                        ))}
+                        {!isEditMode && formData.allergies.length === 0 && (
+                          <p className="text-xs text-gray-500 italic">Click Edit to view and manage allergies</p>
                         )}
                       </div>
 
-                      {/* Common Allergies Grid */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-2">Common allergies:</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {predefinedAllergies.map((allergy) => (
-                            <button
-                              key={allergy}
-                              type="button"
-                              onClick={() => {
-                                if (isDecrypted) {
-                                  handleAllergy(
-                                    getSafeAllergies().includes(allergy) ? 'remove' : 'add',
+                      {isEditMode && (
+                        <>
+                          <div className="mb-4">
+                            <p className="text-xs text-gray-500 mb-2">Common allergies:</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {predefinedAllergies.map((allergy) => (
+                                <button
+                                  key={allergy}
+                                  type="button"
+                                  onClick={() => handleAllergy(
+                                    formData.allergies.includes(allergy) ? 'remove' : 'add',
                                     allergy
-                                  );
-                                } else {
-                                  showError('Please create or enter health key first');
-                                }
-                              }}
-                              className={`
-                                px-3 py-2 rounded-lg text-xs transition-colors text-left
-                                ${getSafeAllergies().includes(allergy)
-                                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                                  : 'bg-gray-900/50 text-gray-400 border border-gray-800 hover:border-gray-700'
-                                }
-                                ${(!isDecrypted) ? 'opacity-30' : ''}
-                              `}
-                            >
-                              <span className="truncate block">{allergy}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Custom Allergy Input */}
-                      <div className="relative">
-                        <div className="flex gap-2">
-                          <div className="flex-1 relative">
-                            <input
-                              type="text"
-                              value={customAllergyInput}
-                              onChange={(e) => {
-                                if (isDecrypted) {
-                                  handleAllergyInputChange(e);
-                                }
-                              }}
-                              onFocus={() => {
-                                if (!isDecrypted) {
-                                  showError('Please create or enter health key first');
-                                }
-                              }}
-                              placeholder="Add custom allergy..."
-                              className={`w-full px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm ${
-                                (!isDecrypted) ? 'opacity-30' : ''
-                              }`}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  if (isDecrypted) {
-                                    handleAddCustomAllergy();
-                                  } else {
-                                    showError('Please create or enter health key first');
-                                  }
-                                }
-                              }}
-                            />
+                                  )}
+                                  className={`px-3 py-2 rounded-lg text-xs transition-colors text-left ${
+                                    formData.allergies.includes(allergy)
+                                      ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                      : 'bg-gray-900/50 text-gray-400 border border-gray-800 hover:border-gray-700'
+                                  }`}
+                                >
+                                  <span className="truncate block">{allergy}</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (isDecrypted) {
-                                handleAddCustomAllergy();
-                              } else {
-                                showError('Please create or enter health key first');
-                              }
-                            }}
-                            className={`px-4 py-2.5 rounded-lg transition-colors ${
-                              isDecrypted && customAllergyInput.trim()
-                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                                : 'opacity-30 bg-gray-800 text-gray-300'
-                            }`}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                        {/* Suggestions dropdown */}
-                        {allergySuggestions.length > 0 && customAllergyInput && (
-                          <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            {allergySuggestions.map((suggestion, idx) => (
+
+                          <div className="relative">
+                            <div className="flex gap-2">
+                              <div className="flex-1 relative">
+                                <input
+                                  type="text"
+                                  value={customAllergyInput}
+                                  onChange={handleAllergyInputChange}
+                                  placeholder="Add custom allergy..."
+                                  className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddCustomAllergy();
+                                    }
+                                  }}
+                                />
+                              </div>
                               <button
-                                key={idx}
                                 type="button"
-                                className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                                onClick={() => {
-                                  setCustomAllergyInput(suggestion);
-                                  setAllergySuggestions([]);
-                                }}
+                                onClick={handleAddCustomAllergy}
+                                className={`px-4 py-2.5 rounded-lg transition-colors ${
+                                  customAllergyInput.trim()
+                                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                                    : 'opacity-30 bg-gray-800 text-gray-300'
+                                }`}
                               >
-                                {suggestion}
+                                <Plus className="w-4 h-4" />
                               </button>
-                            ))}
+                            </div>
+                            {allergySuggestions.length > 0 && customAllergyInput && (
+                              <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                {allergySuggestions.map((suggestion, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                                    onClick={() => {
+                                      setCustomAllergyInput(suggestion);
+                                      setAllergySuggestions([]);
+                                    }}
+                                  >
+                                    {suggestion}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+                        </>
+                      )}
                     </div>
 
-                    {/* Security Notice */}
-                    <div className="p-3 sm:p-4 bg-gray-900/30 rounded-none sm:rounded-lg border-0 sm:border border-gray-800">
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-sm font-medium text-white mb-1">Security Notice</h4>
-                          <p className="text-xs text-gray-500">
-                            Your health data is encrypted with your personal key. The key is never stored and cannot be recovered if forgotten.
-                          </p>
+                    {/* Invalid Data Warning */}
+                    {invalidHealthData.hasInvalidData && (
+                      <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                          <div className="text-sm">
+                            <p className="text-red-400 font-medium mb-1">Invalid Health Data Detected</p>
+                            {invalidHealthData.conditions.length > 0 && (
+                              <p className="text-xs text-red-300">
+                                Unsupported conditions: {invalidHealthData.conditions.join(', ')}
+                              </p>
+                            )}
+                            {invalidHealthData.allergies.length > 0 && (
+                              <p className="text-xs text-red-300 mt-1">
+                                Unsupported allergies: {invalidHealthData.allergies.join(', ')}
+                              </p>
+                            )}
+                            <p className="text-xs text-red-400/80 mt-2">
+                              Please remove or correct these items before saving.
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1559,175 +1330,6 @@ const ProfileSetup = ({ editMode = false }) => {
           </div>
         </motion.div>
       </div>
-
-      {/* Health Key Modal */}
-      <AnimatePresence>
-        {showKeyModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-              onClick={() => setShowKeyModal(false)}
-            />
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none"
-            >
-              <div className="bg-gray-900 rounded-xl border border-gray-800 shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-white">
-                        {hasHealthKey ? 'Enter Health Key' : 'Create Health Key'}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {hasHealthKey
-                          ? 'Enter your key to view and edit health data'
-                          : 'Create a secure key to encrypt your health information'
-                        }
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowKeyModal(false);
-                        setHealthKey('');
-                        setConfirmHealthKey('');
-                      }}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                  </div>
-
-                  {!hasHealthKey ? (
-                    // Create Key Form
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
-                          Create Health Key
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showHealthKey ? "text" : "password"}
-                            value={healthKey}
-                            onChange={(e) => setHealthKey(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm pr-12"
-                            placeholder="Minimum 8 characters"
-                            minLength={8}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowHealthKey(!showHealthKey)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-400"
-                          >
-                            {showHealthKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
-                          Confirm Key
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showConfirmHealthKey ? "text" : "password"}
-                            value={confirmHealthKey}
-                            onChange={(e) => setConfirmHealthKey(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm pr-12"
-                            placeholder="Re-enter your key"
-                            minLength={8}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmHealthKey(!showConfirmHealthKey)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-400"
-                          >
-                            {showConfirmHealthKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="p-4 bg-yellow-500/5 rounded-lg border border-yellow-500/20">
-                        <div className="flex items-start gap-3">
-                          <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-                          <div>
-                            <h4 className="text-sm font-medium text-white mb-1">Important</h4>
-                            <p className="text-xs text-gray-500">
-                              This key cannot be recovered. Store it securely. You'll need it to edit health data.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleCreateHealthKey}
-                        disabled={healthKey.length < 8 || healthKey !== confirmHealthKey}
-                        className="w-full py-3 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20 text-sm disabled:opacity-50"
-                      >
-                        Create Key
-                      </button>
-                    </div>
-                  ) : (
-                    // Enter Key Form
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
-                          Enter Your Health Key
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showHealthKey ? "text" : "password"}
-                            value={healthKey}
-                            onChange={(e) => setHealthKey(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-lg focus:border-primary-500/30 focus:outline-none text-white text-sm pr-12"
-                            placeholder="Enter your health key"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowHealthKey(!showHealthKey)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-400"
-                          >
-                            {showHealthKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          handleDecryptHealthData();
-                          setShowKeyModal(false);
-                        }}
-                        disabled={!healthKey.trim() || isDecrypting}
-                        className="w-full py-3 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {isDecrypting ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            >
-                              <Loader className="w-4 h-4" />
-                            </motion.div>
-                            Decrypting...
-                          </>
-                        ) : (
-                          'Decrypt Data'
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

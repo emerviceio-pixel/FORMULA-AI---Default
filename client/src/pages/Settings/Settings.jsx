@@ -20,25 +20,13 @@ import {
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { profile, logout, resetPin } = useAuth();
+  const { profile, logout } = useAuth();
   const { showSuccess, showError } = useToast();
-
-  // ===========================================
-  // PIN Reset State
-  // ===========================================
-  const [showPinReset, setShowPinReset] = useState(false);
-  const [pinData, setPinData] = useState({
-    recoveryWord: '',
-    newPin: '',
-    confirmPin: ''
-  });
-  const [showRecoveryWord, setShowRecoveryWord] = useState(false);
-  const [showNewPin, setShowNewPin] = useState(false);
-  const [showConfirmPin, setShowConfirmPin] = useState(false);
 
   // ===========================================
   // Account Deletion State
   // ===========================================
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteFeedback, setDeleteFeedback] = useState('');
@@ -79,41 +67,6 @@ const handleAccountDeletion = async () => {
   }
 };
 
-  // PIN Reset Handler
-  const handlePinReset = async () => {
-    // Validation
-    if (pinData.newPin !== pinData.confirmPin) {
-      showError('New PINs do not match');
-      return;
-    }
-
-    if (pinData.newPin.length !== 4 || pinData.confirmPin.length !== 4) {
-      showError('PIN must be 4 digits');
-      return;
-    }
-
-    if (!pinData.recoveryWord.trim()) {
-      showError('Recovery word is required');
-      return;
-    }
-
-    try {
-      const result = await resetPin(pinData.recoveryWord, pinData.newPin);
-      
-      if (result.success) {
-        showSuccess('PIN reset successfully');
-        setShowPinReset(false);
-        setPinData({
-          recoveryWord: '',
-          newPin: '',
-          confirmPin: ''
-        });
-      }
-    } catch (error) {
-      showError(error.message || 'Failed to reset PIN');
-    }
-  };
-
   // Logout Handler
   const handleLogout = async () => {
     try {
@@ -137,11 +90,7 @@ const handleAccountDeletion = async () => {
           description: 'Update your profile details',
           action: () => navigate('/profile'),
         },
-        {
-          label: 'Security & PIN',
-          description: 'Change PIN and security settings',
-          action: () => setShowPinReset(true),
-        }
+
       ]
     },
     {
@@ -325,150 +274,6 @@ const handleAccountDeletion = async () => {
             </div>
           </div>
         </div>
-
-        {/* PIN Reset Modal */}
-        <AnimatePresence>
-          {showPinReset && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-                onClick={() => setShowPinReset(false)}
-              />
-              
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none"
-              >
-                <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
-                  {/* Header */}
-                  <div className="flex items-center justify-between p-6 border-b border-gray-800">
-                    <div>
-                      <h3 className="text-lg font-medium text-white">Reset PIN</h3>
-                      <p className="text-sm text-gray-500 mt-1">Enter your recovery word to set a new PIN</p>
-                    </div>
-                    <button
-                      onClick={() => setShowPinReset(false)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      <XCircle className="w-5 h-5 text-gray-500" />
-                    </button>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-6 space-y-4">
-                    {/* Recovery Word */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
-                        Recovery Word
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showRecoveryWord ? 'text' : 'password'}
-                          value={pinData.recoveryWord}
-                          onChange={(e) =>
-                            setPinData((prev) => ({
-                              ...prev,
-                              recoveryWord: e.target.value
-                            }))
-                          }
-                          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:border-primary-500/50 focus:outline-none text-white text-sm pr-12 transition-colors"
-                          placeholder="Enter your recovery word"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowRecoveryWord(!showRecoveryWord)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-400 transition-colors"
-                        >
-                          {showRecoveryWord ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* New PIN */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
-                        New PIN
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showNewPin ? 'text' : 'password'}
-                          value={pinData.newPin}
-                          onChange={(e) =>
-                            setPinData((prev) => ({
-                              ...prev,
-                              newPin: e.target.value.replace(/\D/g, '').slice(0, 4)
-                            }))
-                          }
-                          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:border-primary-500/50 focus:outline-none text-white text-center text-xl tracking-widest pr-12 transition-colors"
-                          maxLength={4}
-                          placeholder="••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPin(!showNewPin)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-400 transition-colors"
-                        >
-                          {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Confirm PIN */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
-                        Confirm New PIN
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showConfirmPin ? 'text' : 'password'}
-                          value={pinData.confirmPin}
-                          onChange={(e) =>
-                            setPinData((prev) => ({
-                              ...prev,
-                              confirmPin: e.target.value.replace(/\D/g, '').slice(0, 4)
-                            }))
-                          }
-                          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:border-primary-500/50 focus:outline-none text-white text-center text-xl tracking-widest pr-12 transition-colors"
-                          maxLength={4}
-                          placeholder="••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPin(!showConfirmPin)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-400 transition-colors"
-                        >
-                          {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-800">
-                    <button
-                      onClick={() => setShowPinReset(false)}
-                      className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handlePinReset}
-                      className="px-4 py-2 text-sm bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg transition-colors border border-primary-500/20"
-                    >
-                      Reset PIN
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
 
         {/* Delete Account Modal */}
         <AnimatePresence>

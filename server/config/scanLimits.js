@@ -9,7 +9,7 @@ const getScanLimits = () => {
   const premiumEnv = process.env.PREMIUM_SCAN_LIMIT?.toLowerCase();
   const premiumLimit = premiumEnv === 'unlimited' 
     ? Infinity 
-    : (parseInt(process.env.PREMIUM_SCAN_LIMIT) || 50); // Changed default to 50
+    : (parseInt(process.env.PREMIUM_SCAN_LIMIT) || 50); 
   
   // Midnight reset config (default 00:00 from env)
   const scanResetTime = process.env.SCAN_RESET_TIME || '00:00';

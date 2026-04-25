@@ -2,7 +2,7 @@
 require('dotenv').config();
 const crypto = require('crypto');
 
-// Use a strong 32-byte key (64 hex characters)
+// 32-byte key (64 hex characters)
 const algorithm = 'aes-256-gcm';
 const key = Buffer.from(process.env.HEALTH_DATA_ENCRYPTION_KEY, 'hex');
 

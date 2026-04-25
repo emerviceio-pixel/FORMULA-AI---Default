@@ -5,7 +5,7 @@ const { ipKeyGenerator } = require('express-rate-limit');
 // Store for tracking regenerate attempts
 const regenerateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 5, // 5 regenerations per minute
+  max: 1, // 1 regeneration per minute
   message: {
     success: false,
     error: 'Too many regenerations. Please wait 60 seconds.',

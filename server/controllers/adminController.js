@@ -8,7 +8,15 @@ const adminController = {
   async getDashboardOverview(req, res) {
     try {
       const totalUsers = await User.countDocuments();
-      const premiumUsers = await User.countDocuments({ subscription: 'premium' });
+      
+      // Get accurate premium user count from active subscriptions
+      const now = new Date();
+      const activePremiumSubscriptions = await Subscription.find({
+        status: 'active',
+        endDate: { $gt: now }
+      }).distinct('userId');
+      
+      const premiumUsers = activePremiumSubscriptions.length;
       
       // Group users by country
       const usersByCountry = await User.aggregate([
@@ -187,11 +195,41 @@ const adminController = {
         email: { $regex: email, $options: 'i' } 
       }).select('-healthConditionsSystemEncrypted -allergiesSystemEncrypted');
       
+      // Enrich users with subscription data and sync status
+      const Subscription = require('../models/Subscription');
+      const { syncUserSubscriptionStatus } = require('../services/subscriptionSyncService');
+      
+      const enrichedUsers = await Promise.all(users.map(async (user) => {
+        // Sync subscription status first
+        await syncUserSubscriptionStatus(user._id);
+        
+        // Reload user to get updated subscription status
+        const updatedUser = await User.findById(user._id).select('-healthConditionsSystemEncrypted -allergiesSystemEncrypted');
+        const userObj = updatedUser.toObject();
+        
+        // Find the most recent active or non-expired subscription
+        const subscription = await Subscription.findOne({
+          userId: user._id,
+          status: { $in: ['active', 'pending_approval'] }
+        }).sort({ endDate: -1 });
+        
+        if (subscription) {
+          userObj.subscriptionEndDate = subscription.endDate;
+          userObj.subscriptionStatus = subscription.status;
+        } else {
+          userObj.subscriptionEndDate = null;
+          userObj.subscriptionStatus = null;
+        }
+        
+        return userObj;
+      }));
+      
       res.json({ 
         success: true, 
-        data: users 
+        data: enrichedUsers 
       });
     } catch (error) {
+      console.error('Error searching users:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to search users' 

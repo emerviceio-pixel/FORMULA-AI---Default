@@ -1,80 +1,42 @@
+// src/services/authService.js (REFACTORED)
+import { apiFetch } from './api';
+
 class AuthService {
-  // Always use the env variable
-  getBaseUrl() {
-    return import.meta.env.VITE_API_URL;
-  }
-
-  async makeRequest(endpoint, method = 'GET', data = null) {
-    const config = {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    };
-
-    if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
-      config.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(`${this.getBaseUrl()}${endpoint}`, config);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Request failed: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  // Google Auth
   async googleAuth(token) {
-    return await this.makeRequest('/auth/google', 'POST', { token });
-  }
-
-  async verifyPin(pin) {
-    return await this.makeRequest('/auth/verify-pin', 'POST', { pin });
-  }
-
-  async getPinAttemptStatus() {
-    return await this.makeRequest('/auth/pin-attempts', 'GET');
-  }
-
-  async setupPin(pin, recoveryWord) {
-    return await this.makeRequest('/auth/setup-pin', 'POST', { pin, recoveryWord });
+    return await apiFetch('/auth/google', { method: 'POST', body: JSON.stringify({ token }) });
   }
 
   async checkSession() {
-    return await this.makeRequest('/auth/session', 'GET');
+    return await apiFetch('/auth/session');
   }
 
   async getProfile() {
-    return await this.makeRequest('/profile', 'GET');
+    return await apiFetch('/profile');
   }
 
   async updateProfile(profileData) {
-    return await this.makeRequest('/profile', 'PUT', profileData);
+    return await apiFetch('/profile', { method: 'PUT', body: JSON.stringify(profileData) });
   }
 
   async updateSettings(settings) {
-    return await this.makeRequest('/profile/settings', 'PUT', settings);
+    return await apiFetch('/profile/settings', { method: 'PUT', body: JSON.stringify(settings) });
   }
 
   async getCurrentUser() {
-    return await this.makeRequest('/auth/me', 'GET');
+    return await apiFetch('/auth/me');
   }
 
   async logout() {
-    const result = await this.makeRequest('/auth/logout', 'POST');
+    const result = await apiFetch('/auth/logout', { method: 'POST' });
     localStorage.removeItem('Fomula_auth');
-    localStorage.removeItem('tempUser');
     return result;
   }
 
   async deleteAccount(reason, feedback) {
-    return await this.makeRequest('/settings/account', 'DELETE', { reason, feedback });
-  }
-
-  async resetPin(recoveryWord, newPin) {
-    return await this.makeRequest('/auth/reset-pin', 'POST', { recoveryWord, newPin });
+    return await apiFetch('/settings/account', { 
+      method: 'DELETE', 
+      body: JSON.stringify({ reason, feedback }) 
+    });
   }
 }
 

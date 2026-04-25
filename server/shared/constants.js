@@ -1,135 +1,109 @@
 const VALID_HEALTH_CONDITIONS = new Set([
-  // --- Metabolic & Endocrine Disorders ---
-  'Diabetes Type 1',
-  'Diabetes Type 2',
+  // --- Metabolic & Endocrine Disorders (Strongly linked to diet) ---
+  'Type 2 Diabetes',
+  'Diabetes',
   'Prediabetes',
   'Gestational Diabetes',
-  'Hypothyroidism',
-  'Hyperthyroidism',
-  'Hashimoto\'s Disease',
-  'Graves\' Disease',
-  'Cushing\'s Syndrome',
-  'Addison\'s Disease',
-  'Polycystic Ovary Syndrome (PCOS)',
   'Metabolic Syndrome',
   'Obesity',
+  'Overweight',
   'Gout',
-
-  // --- Bone & Joint Health ---
-  'Osteoporosis',
-  'Osteopenia',
-  'Rheumatoid Arthritis',
-  'Osteoarthritis',
-  'Ankylosing Spondylitis',
-  'Lupus (SLE)',
-  'Psoriasis',
-  'Psoriatic Arthritis',
-  'Fibromyalgia',
-  'Sjögren\'s Syndrome',
-
-  // --- Cardiovascular Conditions ---
-  'Hypertension (High Blood Pressure)',
+  'Non-Alcoholic Fatty Liver Disease',
+  'NAFLD',
+  'Insulin Resistance',
   'High Cholesterol',
   'Hyperlipidemia',
+  'Hypothyroidism',
+  'PCOS',
+  'Polycystic Ovary Syndrome',
+
+  // --- Cardiovascular Diseases (Strongly linked to diet) ---
+  'High Blood Pressure',
+  'Hypertension',
   'Coronary Artery Disease',
-  'Heart Failure',
-  'Atrial Fibrillation',
-  'Arrhythmia',
-  'Peripheral Artery Disease',
+  'Heart Disease',
   'Atherosclerosis',
+  'Heart Failure',
   'Angina',
   'History of Heart Attack',
   'History of Stroke',
-  'TIA (Transient Ischemic Attack)',
+  'Peripheral Artery Disease',
+  'Atrial Fibrillation',
+  'Arrhythmia',
 
-  // --- Respiratory Conditions (Chronic) ---
-  'Asthma',
-  'COPD (Chronic Obstructive Pulmonary Disease)',
-  'Chronic Bronchitis',
-  'Emphysema',
-  'Pulmonary Fibrosis',
-  'Sleep Apnea',
-  'Cystic Fibrosis', // Genetic/Chronic
-
-  // --- Gastrointestinal & Liver (Chronic/Functional) ---
-  'GERD (Gastroesophageal Reflux Disease)',
+  // --- Gastrointestinal & Liver Diseases (Diet-related) ---
+  'GERD',
+  'Acid Reflux',
+  'Heartburn',
   'Peptic Ulcer Disease',
+  'Stomach Ulcer',
+  'Irritable Bowel Syndrome',
+  'IBS',
+  'Diverticulitis',
+  'Gallstones',
+  'Chronic Pancreatitis',
   'Crohn\'s Disease',
   'Ulcerative Colitis',
-  'Irritable Bowel Syndrome (IBS)',
   'Celiac Disease',
-  'Diverticulitis',
-  'Non-Alcoholic Fatty Liver Disease (NAFLD)',
   'Cirrhosis',
-  'Chronic Pancreatitis',
-  'Gallstones',
-  'Helicobacter Pylori Infection', // Often chronic if untreated, linked to ulcers/cancer risk
 
-  // --- Neurological Conditions ---
+  // --- Kidney Diseases (Diet-related) ---
+  'Chronic Kidney Disease',
+  'CKD',
+  'Kidney Stones',
+  'Nephritis',
+
+  // --- Bone & Joint Diseases (Linked to diet/inflammation) ---
+  'Osteoporosis',
+  'Osteopenia',
+  'Osteoarthritis',
+  'Rheumatoid Arthritis',
+  'Gouty Arthritis',
+  'Psoriatic Arthritis',
+
+  // --- Respiratory (Linked to obesity from poor diet) ---
+  'Sleep Apnea',
+  'Asthma',
+  'COPD',
+
+  // --- Neurological & Cognitive (Linked to diet/inflammation) ---
   'Migraine',
   'Chronic Headaches',
-  'Epilepsy',
-  'Multiple Sclerosis',
-  'Parkinson\'s Disease',
   'Alzheimer\'s Disease',
   'Dementia',
-  'Neuropathy (Peripheral)',
-  'Trigeminal Neuralgia',
-  'Restless Leg Syndrome',
+  'Cognitive Decline',
+  'Parkinson\'s Disease',
+  'Peripheral Neuropathy',
+  'Neuropathy',
 
-  // --- Mental Health Conditions ---
+  // --- Mental Health (Linked to diet/gut health) ---
   'Depression',
   'Anxiety Disorder',
   'Panic Disorder',
   'Bipolar Disorder',
-  'PTSD (Post-Traumatic Stress Disorder)',
-  'OCD (Obsessive-Compulsive Disorder)',
-  'ADHD (Attention Deficit Hyperactivity Disorder)',
   'Eating Disorder',
   'Insomnia',
-  'Substance Use Disorder',
 
-  // --- Musculoskeletal & Pain Management ---
-  'Chronic Back Pain',
-  'Herniated Disc',
-  'Sciatica',
-  'Carpal Tunnel Syndrome',
-  'Tendonitis',
-  'Bursitis',
-  'Scoliosis',
+  // --- Cancers (Diet-related) ---
+  'Colorectal Cancer',
+  'Colon Cancer',
+  'Breast Cancer',
+  'Liver Cancer',
+  'Pancreatic Cancer',
+  'Stomach Cancer',
+
+  // --- Other Diet-Related Chronic Conditions ---
+  'Chronic Inflammation',
+  'Systemic Inflammation',
   'Chronic Fatigue Syndrome',
-
-  // --- Kidney & Urinary Health ---
-  'Chronic Kidney Disease (CKD)',
-  'Kidney Stones',
-  'Nephritis',
-
-  // --- Reproductive Health (Chronic/Structural) ---
-  'Endometriosis',
-  'Uterine Fibroids',
-  'Erectile Dysfunction',
-  'Chronic Prostatitis',
-  'Benign Prostatic Hyperplasia (Enlarged Prostate)',
-
-  // --- Blood & Immune Disorders ---
-  'Anemia',
   'Iron Deficiency Anemia',
-  'Sickle Cell Disease', // Genetic/Chronic
-  'Hemophilia', // Genetic
-  'Thalassemia', // Genetic
-  'Reynaud\'s Phenomenon',
-  'Sarcoidosis',
-
-  // --- Sensory & Other Chronic Conditions ---
-  'Tinnitus',
-  'Vertigo',
-  'Meniere\'s Disease',
-  'Autism Spectrum Disorder',
-  'Down Syndrome'
+  'Anemia',
+  'Benign Prostatic Hyperplasia',
+  'Erectile Dysfunction'
 ]);
 
 const VALID_ALLERGIES = new Set([
-  // --- Major Global Allergens (The "Big 9") ---
+  // --- Major Global Allergens (Most Common) ---
   'Peanuts (Groundnuts)',
   'Tree Nuts',
   'Walnuts',
@@ -139,102 +113,171 @@ const VALID_ALLERGIES = new Set([
   'Pistachios',
   'Hazelnuts',
   'Milk',
-  'Dairy (Lactose Intolerance)',
+  'Dairy',
+  'Lactose Intolerance',
   'Eggs',
   'Fish',
   'Shellfish',
+  'Shrimp',
+  'Crab',
+  'Lobster',
   'Soy',
+  'Soybeans',
   'Wheat',
   'Gluten',
   'Sesame Seeds',
 
-  // --- Common African Staples & Grains ---
-  'Corn (Maize)',
-  'Cassava',
-  'Yam',
-  'Plantain',
+  // --- Grains & Cereals ---
+  'Corn',
+  'Maize',
   'Rice',
-  'Sorghum',
-  'Millet',
-  'Guinea Corn',
   'Oats',
   'Barley',
   'Rye',
+  'Quinoa',
+  'Sorghum',
+  'Millet',
 
-  // --- Legumes & Beans (Common in West Africa) ---
-  'Cowpeas (Black-Eyed Peas)',
+  // --- Legumes & Beans ---
+  'Cowpeas',
+  'Black-Eyed Peas',
   'Brown Beans',
   'Lentils',
   'Chickpeas',
-  'Soya Beans',
+  'Soybeans',
+  'Green Peas',
   'Bambara Groundnuts',
-  'Locust Beans (Dawadawa/Iru)',
+  'Locust Beans',
+  'Dawadawa',
+  'Iru',
 
-  // --- Vegetables & Leafy Greens ---
+  // --- Vegetables ---
   'Tomatoes',
   'Onions',
   'Garlic',
   'Ginger',
-  'Peppers (Chili/Bell Pepper)',
+  'Peppers',
+  'Chili Peppers',
+  'Bell Peppers',
   'Okra',
-  'Garden Eggs (African Eggplant)',
+  'Eggplant',
+  'Garden Eggs',
   'Spinach',
-  'Kontomire (Cocoyam Leaves)',
   'Celery',
   'Carrots',
-  'Potatoes (Sweet & Irish)',
+  'Potatoes',
+  'Sweet Potatoes',
   'Mushrooms',
+  'Avocado',
 
-  // --- Fruits (Tropical & Local) ---
+  // --- Fruits ---
   'Mangoes',
   'Pineapple',
   'Bananas',
-  'Avocado',
   'Citrus Fruits',
   'Oranges',
   'Lemons',
   'Limes',
   'Grapefruit',
-  'Papaya (Pawpaw)',
+  'Papaya',
+  'Pawpaw',
   'Watermelon',
   'Strawberries',
   'Apples',
+  'Pears',
   'Peaches',
+  'Plums',
   'Kiwis',
   'Coconut',
+  'Grapes',
+  'Raisins',
+  'Dates',
+
+  // --- Tropical & Local Fruits ---
   'Tamarind',
   'Baobab',
+  'Jackfruit',
+  'Durian',
+  'Lychee',
 
-  // --- Spices, Herbs & Condiments ---
-  'Shito (Black Pepper Sauce)',
+  // --- Spices & Condiments ---
+  'Mustard',
   'Curry Powder',
   'Thyme',
+  'Oregano',
+  'Basil',
+  'Cilantro',
+  'Coriander',
   'Nutmeg',
   'Cloves',
   'Cinnamon',
-  'Mustard',
-  'Vinegar',
-  'MSG (Monosodium Glutamate)',
+  'Black Pepper',
+  'White Pepper',
+  'Paprika',
+  'Vanilla',
+
+  // --- Processed Food Additives (Common triggers) ---
+  'MSG',
+  'Monosodium Glutamate',
   'Food Dyes',
+  'Food Coloring',
   'Preservatives',
   'Sulfites',
+  'Benzoates',
+  'Nitrates',
+  'Nitrites',
   'Artificial Sweeteners',
+  'Aspartame',
+  'Sucralose',
+  'Saccharin',
+  'Stevia',
 
-  // --- Other Sensitivities & Intolerances ---
-  'Sugar',
-  'Salt',
-  'Alcohol',
-  'Caffeine',
-  'Chocolate',
+  // --- Sauces & Condiments ---
+  'Shito',
+  'Black Pepper Sauce',
+  'Soy Sauce',
+  'Worcestershire Sauce',
+  'Ketchup',
+  'Mayonnaise',
+  'Vinegar',
+  'Fish Sauce',
+  'Oyster Sauce',
+
+  // --- Proteins & Meats ---
   'Red Meat',
-  'Pork',
-  'Chicken',
   'Beef',
+  'Pork',
+  'Lamb',
   'Goat Meat',
+  'Chicken',
+  'Turkey',
+  'Duck',
   'Snails',
   'Bushmeat',
-  'Latex (Cross-reactivity with some fruits)',
-  'Histamine'
+
+  // --- Beverages & Stimulants ---
+  'Alcohol',
+  'Caffeine',
+  'Coffee',
+  'Tea',
+  'Chocolate',
+  'Cocoa',
+
+  // --- Other Common Allergens ---
+  'Honey',
+  'Yeast',
+  'Gelatin',
+  'Coconut Oil',
+  'Palm Oil',
+  'Seed Oils',
+  'Latex',
+
+  // --- Intolerances & Sensitivities ---
+  'Fructose Intolerance',
+  'Histamine Intolerance',
+  'Salicylate Sensitivity',
+  'Sulfite Sensitivity',
+  'Sugar Sensitivity'
 ]);
 
 // Convert Sets to arrays for API responses

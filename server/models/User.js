@@ -53,25 +53,25 @@ const userSchema = new mongoose.Schema({
     lowercase: true
   },
   
-  // Authentication
+  // PIN fields - REMOVED required flag (optional for new users)
   pinHash: {
-    type: String,
-    required: true
+    type: String
+    // required: true  ← REMOVED
   },
   pinSalt: {
-    type: String,
-    required: true
+    type: String
+    // required: true  ← REMOVED
   },
   recoveryWordHash: {
-    type: String,
-    required: true
+    type: String
+    // required: true  ← REMOVED
   },
   recoveryWordSalt: {
-    type: String,
-    required: true
+    type: String
+    // required: true  ← REMOVED
   },
   
-  // PIN Attempt Tracking
+  // PIN Attempt Tracking (keep but optional)
   pinAttempts: {
     type: Number,
     default: 0
@@ -134,7 +134,7 @@ const userSchema = new mongoose.Schema({
     select: false
   },
 
-    healthKeyHash: {
+  healthKeyHash: {
     type: String,
     select: false
   },
@@ -144,8 +144,8 @@ const userSchema = new mongoose.Schema({
   },
 
   healthConditionsSystemEncrypted: {
-  type: String,
-  select: false
+    type: String,
+    select: false
   },
 
   allergiesSystemEncrypted: {
@@ -240,7 +240,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-    // Deletion tracking
+  // Deletion tracking
   markedForDeletion: {
     type: Date,
     default: null
@@ -248,6 +248,11 @@ const userSchema = new mongoose.Schema({
   deletionScheduledAt: {
     type: Date,
     default: null
+  },
+
+  migratedToSystemKey: {
+    type: Boolean,
+    default: false
   },
   
   // Data retention
@@ -301,135 +306,15 @@ userSchema.methods.calculateBMI = function() {
   return bmi;
 };
 
-// Method to encrypt health data
-userSchema.methods.encryptHealthData = function(data, key) {
-  const algorithm = 'aes-256-gcm'; // Use GCM for authentication
-  const salt = 'health-data-salt'; // Should be consistent
-  const keyBuffer = crypto.scryptSync(key, salt, 32);
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
-  
-  const encrypted = Buffer.concat([
-    cipher.update(JSON.stringify(data), 'utf8'),
-    cipher.final()
-  ]);
-  const authTag = cipher.getAuthTag();
-  
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
+userSchema.methods.encryptHealthData = function(data) {
+  const { encrypt } = require('../utils/encryption');
+  return encrypt(data);
 };
 
-// Method to decrypt health data
-userSchema.methods.decryptHealthData = function(encryptedData, key) {
-  if (!encryptedData) return null;
-  
-  try {
-    const [ivHex, authTagHex, encryptedHex] = encryptedData.split(':');
-    if (!ivHex || !authTagHex || !encryptedHex) return null;
-    
-    const algorithm = 'aes-256-gcm';
-    const salt = 'health-data-salt';
-    const keyBuffer = crypto.scryptSync(key, salt, 32);
-    
-    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, Buffer.from(ivHex, 'hex'));
-    decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
-    
-    const decrypted = Buffer.concat([
-      decipher.update(Buffer.from(encryptedHex, 'hex')),
-      decipher.final()
-    ]);
-    
-    return JSON.parse(decrypted.toString('utf8'));
-  } catch (error) {
-    console.error('Decryption failed:', error);
-    return null;
-  }
-};
-
-// Method to verify PIN
-userSchema.methods.verifyPin = async function(pin) {
-  const hash = await bcrypt.hash(pin, this.pinSalt);
-  return hash === this.pinHash;
-};
-
-// Method to handle PIN verification with attempt tracking
-userSchema.methods.verifyPinWithAttempts = async function(pin) {
-  const now = new Date();
-  
-  // Check if user is currently locked out
-  if (this.pinLockoutUntil && this.pinLockoutUntil > now) {
-    const remainingTime = Math.ceil((this.pinLockoutUntil - now) / 1000);
-    return {
-      success: false,
-      locked: true,
-      remainingTime,
-      attempts: this.pinAttempts
-    };
-  }
-  
-  // Verify PIN
-  const isValid = await this.verifyPin(pin);
-  
-  if (isValid) {
-    // Reset attempts on success
-    this.pinAttempts = 0;
-    this.lastPinAttemptAt = null;
-    this.pinLockoutUntil = null;
-    await this.save();
-    
-    return {
-      success: true,
-      attempts: 0
-    };
-  } else {
-    // Increment attempts
-    this.pinAttempts += 1;
-    this.lastPinAttemptAt = now;
-    
-    // Calculate lockout duration after 3 attempts
-    if (this.pinAttempts >= 3) {
-      const lockoutDuration = Math.min(30 * (this.pinAttempts - 2), 300); // 30s, 60s, 90s, ..., max 5min
-      this.pinLockoutUntil = new Date(now.getTime() + lockoutDuration * 1000);
-    }
-    
-    await this.save();
-    
-    return {
-      success: false,
-      locked: this.pinAttempts >= 3,
-      remainingTime: this.pinLockoutUntil ? Math.ceil((this.pinLockoutUntil - now) / 1000) : 0,
-      attempts: this.pinAttempts
-    };
-  }
-};
-
-// Method to reset PIN attempts (for reset functionality)
-userSchema.methods.resetPinAttempts = async function() {
-  this.pinAttempts = 0;
-  this.lastPinAttemptAt = null;
-  this.pinLockoutUntil = null;
-  await this.save();
-};
-
-
-// Method to verify recovery word
-userSchema.methods.verifyRecoveryWord = async function(word) {
-  const hash = await bcrypt.hash(word, this.recoveryWordSalt);
-  return hash === this.recoveryWordHash;
-};
-
-// Method to reset PIN
-userSchema.methods.resetPin = async function(newPin, recoveryWord) {
-  const isValidRecovery = await this.verifyRecoveryWord(recoveryWord);
-  if (!isValidRecovery) {
-    throw new Error('Invalid recovery word');
-  }
-  
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(newPin, salt);
-  
-  this.pinSalt = salt;
-  this.pinHash = hash;
-  return this.save(); //Only save once
+// REPLACE decryptHealthData method with:
+userSchema.methods.decryptHealthData = function(encryptedData) {
+  const { decrypt } = require('../utils/encryption');
+  return decrypt(encryptedData);
 };
 
 

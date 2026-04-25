@@ -117,7 +117,8 @@ const regenerateController = {
           bestTime: newScan.bestTimeToEat,
           alternatives: newScan.alternatives,
           scannedAt: newScan.scannedAt,
-          inputType
+          inputType,
+          triggerValue
         },
         remaining: remaining
       });

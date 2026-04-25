@@ -48,11 +48,9 @@ const Onboarding = () => {
       const result = await googleLogin(credentialResponse.credential);
       
       if (result.isNewUser) {
-        navigate('/pin-setup');
+        navigate('/profile-setup');
       } else {
-        navigate('/pin-verification', { 
-          state: { isNewSession: true } 
-        });
+        navigate('/dashboard');
       }
     } catch (error) {
       showError('Failed to authenticate with Google');

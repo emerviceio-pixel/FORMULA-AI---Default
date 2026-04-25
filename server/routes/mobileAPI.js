@@ -1,37 +1,31 @@
-// server/routes/mobileAPI.js
+// OPTION 1: DELETE the entire mobile API file (if mobile app will use same Google OAuth)
+// OPTION 2: Replace with proper auth (e.g., JWT from web session)
+
+// If you need to keep mobile API, here's a modified version WITHOUT PIN:
+
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-// Mobile login using EMAIL + PIN only
+// Mobile login using EMAIL ONLY (no PIN)
+// WARNING: This is less secure. Consider using OAuth or a proper mobile auth flow.
 router.post('/login', async (req, res) => {
   try {
-    const { email, pin } = req.body;
+    const { email } = req.body;
     
-    if (!email || !pin) {
+    if (!email) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Email and PIN required' 
+        error: 'Email required' 
       });
     }
     
-    const user = await User.findOne({ email }).select('+pinHash');
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ 
         success: false, 
-        error: 'Invalid credentials' 
-      });
-    }
-    
-    // Verify PIN using bcrypt
-    const isPinValid = await bcrypt.compare(pin, user.pinHash);
-    
-    if (!isPinValid) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Invalid PIN' 
+        error: 'User not found' 
       });
     }
     

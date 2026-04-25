@@ -1,5 +1,7 @@
-// server/middleware/auth.js
+// REPLACE THE ENTIRE FILE WITH:
+
 const User = require('../models/User');
+const { syncUserSubscriptionStatus } = require('../services/subscriptionSyncService');
 
 const requireAuth = async (req, res, next) => {
   if (!req.session.userId) {
@@ -9,46 +11,25 @@ const requireAuth = async (req, res, next) => {
     });
   }
   
-  // Check if PIN has been verified (for sensitive operations)
-  if (req.requiresPinVerification && !req.session.isAuthenticated) {
-    return res.status(401).json({
-      success: false,
-      error: 'PIN verification required'
-    });
-  }
-
-    // ✅ UPDATE LAST ACTIVE TIMESTAMP
+  // UPDATE LAST ACTIVE TIMESTAMP
   try {
     await User.findByIdAndUpdate(req.session.userId, {
       lastActiveAt: new Date()
     });
   } catch (error) {
+    // Silent fail
   }
   
-  // ✅ NEW: Check if premium subscription has expired
+  // SYNC SUBSCRIPTION STATUS
   try {
-    const user = await User.findById(req.session.userId);
-    if (user && user.subscription === 'premium' && user.subscriptionExpiry) {
-      const now = new Date();
-      if (user.subscriptionExpiry < now) {
-        // Auto-downgrade expired subscriptions
-        await User.findByIdAndUpdate(req.session.userId, {
-          subscription: 'free',
-          subscriptionExpiry: null
-        });
-        // Update session to reflect downgrade
-        req.session.subscription = 'free';
-      }
+    const syncResult = await syncUserSubscriptionStatus(req.session.userId);
+    if (syncResult) {
+      req.session.subscription = syncResult.subscription;
     }
   } catch (error) {
-    // Don't block auth if expiry check fails
+    console.error('Error syncing subscription status:', error);
   }
   
-  next();
-};
-
-const requirePinVerification = (req, res, next) => {
-  req.requiresPinVerification = true;
   next();
 };
 
@@ -71,4 +52,4 @@ const requireAdminAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { requireAuth, requirePinVerification, requireAdminAuth };
+module.exports = { requireAuth, requireAdminAuth };
