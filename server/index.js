@@ -124,14 +124,6 @@ if (process.env.MOBILE_API_ENABLED === 'true') {
   console.log('✅ Mobile API enabled at /api/mobile');
 }
 
-// Test endpoints
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'Backend is running',
-  });
-});
-
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
