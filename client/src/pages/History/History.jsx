@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { useToast } from '../../hooks/useToast';
 import { apiFetch } from '../../services/api';
+import { FoodNameDisplay } from '../../components/FoodNameDisplay';
 import {
   Search,
   Filter,
@@ -149,7 +150,12 @@ const ActionSheet = ({ isOpen, onClose, item, onDelete, formatDate }) => {
           {/* Item Preview */}
           <div className="px-4 py-3 border-b border-white/[0.05]">
             <p className="text-xs text-gray-600 mb-1">Selected item</p>
-            <p className="text-white font-medium">{item.foodName}</p>
+            <FoodNameDisplay 
+              name={item.foodName} 
+              variant="listItem"
+              minFontSize={12}
+              maxFontSize={16}
+            />
             <p className="text-xs text-gray-700 mt-1">
               {formatDate(item.scannedAt)}
             </p>
@@ -290,9 +296,13 @@ const ModalContent = ({ result, meta, StatusIcon, userFeedback, isSubmitting, is
               <span className="text-[11px] font-medium text-blue-400">{triggerDisplay}</span>
             </div>
           )}
-          <h2 className="text-2xl lg:text-3xl pt-4 text-white mt-0 mb-0 leading-snug" style={{ fontFamily: "'DM Serif Display', serif" }}>
-            {result.foodName}
-          </h2>
+          <FoodNameDisplay 
+            name={result.foodName} 
+            variant="modal"
+            className="pt-4 mt-0 mb-0 leading-snug"
+            minFontSize={16}
+            maxFontSize={28}
+          />
         </div>
         <div className="flex items-start gap-2">
           <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full ${meta.color} ${meta.bg} ${meta.border}`}>
@@ -1059,12 +1069,15 @@ return (
                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${meta.dot}`} />
                             
                             <div className="flex-1 min-w-0">
-                              <p className={cn(
-                                "font-medium truncate",
-                                isMobile ? "text-sm text-white/90" : "text-sm text-white"
-                              )}>
-                                {scan.foodName}
-                              </p>
+                              <FoodNameDisplay 
+                                name={scan.foodName} 
+                                variant="listItem"
+                                className={cn(
+                                  isMobile ? "text-white/90" : "text-white"
+                                )}
+                                minFontSize={12}
+                                maxFontSize={16}
+                              />
                               <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
                                 <Calendar className="w-3 h-3 flex-shrink-0" />
                                 <span>{formatDate(scan.scannedAt)}</span>

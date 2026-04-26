@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 
@@ -33,6 +34,7 @@ app.use(cors({
 
 app.set('trust proxy', 1);
 app.use(express.json());
+app.use(cookieParser());
 
 // Session configuration -2
 app.use(session({
@@ -127,7 +129,6 @@ app.get('/api/test', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Backend is running',
-    sessionId: req.session.id 
   });
 });
 

@@ -193,7 +193,7 @@ const Onboarding = () => {
             <Utensils className="w-4 h-4 text-white/90" />
           </div>
             <span className="text-white text-base sm:text-lg md:text-xl font-semibold tracking-wide drop-shadow-md">
-              Fomula
+             {/** Fomula */}
             </span>
         </div>
 
@@ -246,7 +246,31 @@ const Onboarding = () => {
       {/* ══════════════════════════════════════════════════════
           RIGHT PANEL — login form
       ══════════════════════════════════════════════════════ */}
-      <div className="flex-1 bg-[#080808] relative flex flex-col items-center justify-start sm:justify-center pt-10 sm:pt-0 px-6 sm:p-10 pb-8">
+      <div className="flex-1 bg-[#080808] relative flex flex-col items-center justify-start sm:justify-center pt-8 sm:pt-0 px-6 sm:p-10 pb-8">
+
+        {/* Fomula Brand Header - All Screens */}
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.5, ease: [.16, 1, .3, 1] }}
+          className="text-center mb-8"
+        >
+          <h2 
+            className="text-2xl font-semibold text-white tracking-[.08em] drop-shadow-lg"
+            style={{ 
+              fontFamily: "'DM Serif Display', serif",
+              background: 'linear-gradient(135deg, rgba(255,255,255,.95) 0%, rgba(165,180,252,.4) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
+            Fomula
+          </h2>
+          <p className="text-[10px] text-indigo-400/50 mt-1 tracking-widest uppercase font-medium">
+            AI Health Coach
+          </p>
+        </motion.div>
 
         {/* form container */}
         <motion.div
@@ -262,15 +286,15 @@ const Onboarding = () => {
             transition={{ delay:.12, duration:.5 }}
             className="mb-8"
           >
-            <span className="block text-[10px] font-semibold text-indigo-400/60 pb-5 uppercase tracking-widest mb-3">
+            <h1 
+              className="text-[1.95rem] sm:text-[2.1rem] leading-snug text-white lg:whitespace-nowrap lg:text-[2rem] mb-3"
+              style={{ fontFamily:"'DM Serif Display', serif", letterSpacing: '-.02em' }}>
+              Your personal <em className="text-indigo-300 not-italic">meal coach</em>
+            </h1>
+            <span className="inline-block text-[10px] font-semibold text-indigo-400/60 uppercase tracking-widest">
               Get started free
             </span>
-            <h1 className="text-[1.9rem] leading-tight text-white"
-              style={{ fontFamily:"'DM Serif Display', serif" }}>
-              Your personal<br/>
-              <em className="text-indigo-300 not-italic">meal coach</em>
-            </h1>
-            <p className="text-[12px] text-gray-600 mt-3 leading-relaxed">
+            <p className="text-[12px] text-gray-600 mt-4 leading-relaxed">
               Connect your Google account to receive meal analysis tailored to you!
             </p>
           </motion.div>
@@ -378,7 +402,7 @@ const Onboarding = () => {
             <a href="/privacy" className="text-indigo-400/60 hover:text-indigo-400 transition-colors underline underline-offset-2 decoration-indigo-500/25">Privacy Policy</a>
           </motion.p>
 
-          <p className="text-center text-[10px] text-gray-800 mt-4">© 2025 Fomula. All rights reserved.</p>
+          <p className="text-center text-[10px] text-gray-800 mt-4">© 2025 Fomula-LAMAMDA. All rights reserved.</p>
         </motion.div>
       </div>
 

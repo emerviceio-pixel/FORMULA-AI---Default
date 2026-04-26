@@ -12,7 +12,6 @@ import Settings from './pages/Settings/Settings';
 import History from './pages/History/History';
 import FAQ from './pages/Settings/FAQ';
 import Subscription from './pages/Settings/Subscription';
-import Analyzer from './pages/Analyzer/Analyzer';
 import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
 import TermsOfService from './pages/Legal/TermsOfService';
 import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
@@ -110,15 +109,7 @@ function App() {
                   <AdminCashPayment />
                 </AuthenticatedLayout>
               </ProtectedRoute>
-            } />
-            
-            <Route path="/analyzer" element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <Analyzer />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            } />
+            } />         
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
